@@ -1,44 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Container, Button, Grid, useTheme, Fab, Zoom } from '@mui/material';
-import { motion } from 'framer-motion';
-import { CategoryFilter } from './UI/CategoryFilter';
-import { SkillTree } from './SkillTree/SkillTree';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  Button, 
+  Paper, 
+  Grid, 
+  useTheme,
+  Fab,
+  useMediaQuery
+} from '@mui/material';
 import { FitnessCenter, EmojiEvents, Whatshot, ArrowDownward, KeyboardArrowUp } from '@mui/icons-material';
+import { SkillTree } from './SkillTree/SkillTree';
+import { CategoryFilter } from './UI/CategoryFilter';
 import { SkillCategory } from '../types';
+import { 
+  staggerContainer, 
+  fadeUp, 
+  slideInLeft, 
+  slideInRight, 
+  fadeInScale 
+} from '../utils/animationVariants';
 
 export const Home: React.FC = () => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentCategory, setCurrentCategory] = useState<SkillCategory | 'All'>('All');
   const [showBackToTop, setShowBackToTop] = useState(false);
   
-  // Handle category selection
-  const handleCategorySelect = (category: SkillCategory | 'All') => {
-    console.log(`Selected category: ${category}`);
-    setCurrentCategory(category);
-    
-    // Scroll to skill tree
-    const skillTreeElement = document.getElementById('skill-tree');
-    if (skillTreeElement) {
-      skillTreeElement.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-  
-  // Handle scroll to show/hide back to top button
+  // Handle scroll to show back to top button
   useEffect(() => {
     const handleScroll = () => {
-      // Show button when page is scrolled down 300px
-      if (window.scrollY > 300) {
-        setShowBackToTop(true);
-      } else {
-        setShowBackToTop(false);
-      }
+      setShowBackToTop(window.scrollY > 500);
     };
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  // Scroll to top function
+  const handleCategorySelect = (category: SkillCategory | 'All') => {
+    setCurrentCategory(category);
+    
+    // Scroll to skill tree section
+    const skillTreeElement = document.getElementById('skill-tree');
+    if (skillTreeElement) {
+      skillTreeElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -48,24 +58,27 @@ export const Home: React.FC = () => {
   
   return (
     <Box>
+      {/* Hero Section */}
       <Paper 
-        elevation={0} 
+        elevation={0}
         sx={{ 
-          p: { xs: 4, md: 6 }, 
-          mb: 5, 
-          borderRadius: 4,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-          color: 'white',
+          pt: { xs: 8, sm: 12 }, 
+          pb: { xs: 12, sm: 16 }, 
+          borderRadius: { xs: '0 0 24px 24px', sm: '0 0 32px 32px' },
+          background: theme.palette.mode === 'dark' 
+            ? 'linear-gradient(135deg, #1a237e 0%, #311b92 100%)' 
+            : 'linear-gradient(135deg, #3f51b5 0%, #7e57c2 100%)',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          mb: { xs: 2, sm: 4 }
         }}
       >
-        {/* Decorative elements */}
+        {/* Decorative circles */}
         <Box 
           sx={{ 
             position: 'absolute', 
             top: -100, 
-            right: -100, 
+            right: -50, 
             width: 300, 
             height: 300, 
             borderRadius: '50%', 
@@ -73,6 +86,7 @@ export const Home: React.FC = () => {
             zIndex: 0
           }} 
         />
+        
         <Box 
           sx={{ 
             position: 'absolute', 
@@ -88,105 +102,128 @@ export const Home: React.FC = () => {
         
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            variants={staggerContainer(0.2, 0.1)}
+            initial="hidden"
+            animate="show"
           >
-            <Typography variant="h2" component="h1" sx={{ fontWeight: 'bold', mb: 2 }}>
-              Body Level Up
-            </Typography>
-            <Typography variant="h5" sx={{ mb: 4, opacity: 0.9, maxWidth: 700 }}>
-              Progressive calisthenics skill tree to level up your fitness journey
-            </Typography>
+            <motion.div variants={fadeUp}>
+              <Typography 
+                variant={isMobile ? "h3" : "h2"} 
+                component="h1" 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  mb: 2, 
+                  color: 'white',
+                  textAlign: isMobile ? 'center' : 'left',
+                  fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem' }
+                }}
+              >
+                Body Level Up
+              </Typography>
+            </motion.div>
             
-            <Button 
-              variant="contained" 
-              size="large"
-              color="secondary"
-              onClick={() => handleCategorySelect('All')}
-              sx={{ 
-                borderRadius: 30, 
-                px: 4, 
-                py: 1.5, 
-                fontSize: '1.1rem',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-                '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 25px rgba(0,0,0,0.4)',
-                }
+            <motion.div variants={fadeUp}>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  mb: 4, 
+                  opacity: 0.9, 
+                  maxWidth: 700, 
+                  color: 'white',
+                  textAlign: isMobile ? 'center' : 'left',
+                  fontSize: { xs: '1.1rem', sm: '1.5rem' },
+                  mx: isMobile ? 'auto' : 0
+                }}
+              >
+                Progressive calisthenics skill tree to level up your fitness journey
+              </Typography>
+            </motion.div>
+            
+            <motion.div 
+              variants={fadeUp}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{
+                display: 'flex',
+                justifyContent: isMobile ? 'center' : 'flex-start'
               }}
             >
-              View All Skills
-            </Button>
+              <Button 
+                variant="contained" 
+                size="large"
+                color="secondary"
+                onClick={() => handleCategorySelect('All')}
+                sx={{ 
+                  borderRadius: 30, 
+                  px: 4, 
+                  py: 1.5, 
+                  fontSize: '1.1rem',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 25px rgba(0,0,0,0.4)',
+                  }
+                }}
+              >
+                View All Skills
+              </Button>
+            </motion.div>
           </motion.div>
           
-          <Grid container spacing={4} sx={{ mt: 8 }}>
+          <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mt: { xs: 6, sm: 8 } }}>
             <Grid item xs={12} md={4}>
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                variants={slideInLeft}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.3 }}
               >
                 <Box>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      mb: 2,
+                      color: 'white',
+                      justifyContent: isMobile ? 'center' : 'flex-start'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        mr: 1.5,
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      <FitnessCenter sx={{ color: 'white' }} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Progressive Overload
+                    </Typography>
+                  </Box>
                   <Paper 
-                    elevation={3} 
                     sx={{ 
                       p: 3, 
-                      borderRadius: 3,
+                      borderRadius: 4,
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
                       height: '100%',
-                      background: theme.palette.mode === 'dark' 
-                        ? 'linear-gradient(135deg, #1E1E1E 0%, #121212 100%)' 
-                        : 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         transform: 'translateY(-5px)',
-                        boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
                       }
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          mr: 2
-                        }}
-                      >
-                        <FitnessCenter />
-                      </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        Progressive Skills
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      Follow a structured progression path from beginner to advanced exercises
+                    <Typography align={isMobile ? "center" : "left"}>
+                      Follow a structured progression from beginner to advanced exercises, 
+                      gradually increasing difficulty as you master each skill.
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'rgba(255,255,255,0.1)',
-                          flexShrink: 0
-                        }}
-                      >
-                        <FitnessCenter sx={{ color: theme.palette.primary.main }} />
-                      </Box>
-                      <Typography variant="body1">
-                        Each skill builds upon the previous one
-                      </Typography>
-                    </Box>
                   </Paper>
                 </Box>
               </motion.div>
@@ -194,70 +231,57 @@ export const Home: React.FC = () => {
             
             <Grid item xs={12} md={4}>
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                variants={fadeInScale}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.4 }}
               >
                 <Box>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      mb: 2,
+                      color: 'white',
+                      justifyContent: isMobile ? 'center' : 'flex-start'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        mr: 1.5,
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      <EmojiEvents sx={{ color: 'white' }} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Achievement System
+                    </Typography>
+                  </Box>
                   <Paper 
-                    elevation={3} 
                     sx={{ 
                       p: 3, 
-                      borderRadius: 3,
+                      borderRadius: 4,
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
                       height: '100%',
-                      background: theme.palette.mode === 'dark' 
-                        ? 'linear-gradient(135deg, #1E1E1E 0%, #121212 100%)' 
-                        : 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         transform: 'translateY(-5px)',
-                        boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
                       }
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'secondary.main',
-                          color: 'white',
-                          mr: 2
-                        }}
-                      >
-                        <EmojiEvents />
-                      </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        Achievement System
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      Track your progress and unlock new skills as you complete exercises
+                    <Typography align={isMobile ? "center" : "left"}>
+                      Earn XP and unlock new skills as you complete exercises. 
+                      Track your progress and celebrate your achievements along the way.
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'rgba(255,255,255,0.1)',
-                          flexShrink: 0
-                        }}
-                      >
-                        <EmojiEvents sx={{ color: theme.palette.secondary.main }} />
-                      </Box>
-                      <Typography variant="body1">
-                        Earn XP and level up as you master new skills
-                      </Typography>
-                    </Box>
                   </Paper>
                 </Box>
               </motion.div>
@@ -265,95 +289,105 @@ export const Home: React.FC = () => {
             
             <Grid item xs={12} md={4}>
               <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                variants={slideInRight}
+                initial="hidden"
+                animate="show"
+                transition={{ delay: 0.5 }}
               >
                 <Box>
+                  <Box 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      mb: 2,
+                      color: 'white',
+                      justifyContent: isMobile ? 'center' : 'flex-start'
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        mr: 1.5,
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      <Whatshot sx={{ color: 'white' }} />
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                      Balanced Training
+                    </Typography>
+                  </Box>
                   <Paper 
-                    elevation={3} 
                     sx={{ 
                       p: 3, 
-                      borderRadius: 3,
+                      borderRadius: 4,
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
                       height: '100%',
-                      background: theme.palette.mode === 'dark' 
-                        ? 'linear-gradient(135deg, #1E1E1E 0%, #121212 100%)' 
-                        : 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
-                      boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         transform: 'translateY(-5px)',
-                        boxShadow: '0 12px 25px rgba(0,0,0,0.15)',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
                       }
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: '#FF9800',
-                          color: 'white',
-                          mr: 2
-                        }}
-                      >
-                        <Whatshot />
-                      </Box>
-                      <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                        Progress Tracking
-                      </Typography>
-                    </Box>
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      Keep track of your sets, reps, and completed exercises
+                    <Typography align={isMobile ? "center" : "left"}>
+                      Focus on all aspects of fitness with exercises organized by Push, Pull, Legs, and Core categories
+                      for a well-rounded physique.
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 50,
-                          height: 50,
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'rgba(255,255,255,0.1)',
-                          flexShrink: 0
-                        }}
-                      >
-                        <FitnessCenter sx={{ color: '#FFFFFF' }} />
-                      </Box>
-                      <Typography variant="body1">
-                        Track your sets and reps with visual progress indicators
-                      </Typography>
-                    </Box>
                   </Paper>
                 </Box>
               </motion.div>
             </Grid>
           </Grid>
           
-          <Box 
-            sx={{ 
+          <motion.div
+            initial={{ y: 0 }}
+            animate={{ 
+              y: [0, -15, 0] 
+            }}
+            transition={{ 
+              duration: 0.6, 
+              repeat: Infinity, 
+              repeatType: "reverse" as const, 
+              repeatDelay: 0.5 
+            }}
+            style={{ 
               display: 'flex', 
               justifyContent: 'center', 
-              mt: 6,
-              animation: 'bounce 2s infinite',
-              '@keyframes bounce': {
-                '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
-                '40%': { transform: 'translateY(-20px)' },
-                '60%': { transform: 'translateY(-10px)' }
-              }
+              marginTop: '4rem' 
             }}
           >
-            <ArrowDownward sx={{ fontSize: 40, opacity: 0.7 }} />
-          </Box>
+            <Box 
+              onClick={() => {
+                const skillTreeElement = document.getElementById('skill-tree');
+                if (skillTreeElement) {
+                  skillTreeElement.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              sx={{ 
+                cursor: 'pointer',
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}
+            >
+              <Typography variant="body1" sx={{ mb: 1, fontWeight: 'medium' }}>
+                Explore Skills
+              </Typography>
+              <ArrowDownward sx={{ fontSize: 40, opacity: 0.7 }} />
+            </Box>
+          </motion.div>
         </Container>
       </Paper>
       
-      <Box id="skill-tree">
+      <Box id="skill-tree" sx={{ px: { xs: 2, sm: 3, md: 4 }, maxWidth: '1400px', mx: 'auto' }}>
         <CategoryFilter 
           onSelectCategory={handleCategorySelect} 
           currentCategory={currentCategory} 
@@ -362,22 +396,34 @@ export const Home: React.FC = () => {
       </Box>
       
       {/* Back to top button */}
-      <Zoom in={showBackToTop}>
-        <Fab 
-          color="primary" 
-          size="medium" 
-          aria-label="scroll back to top"
-          onClick={scrollToTop}
-          sx={{ 
-            position: 'fixed', 
-            bottom: 20, 
-            right: 20,
-            zIndex: 1000
-          }}
-        >
-          <KeyboardArrowUp />
-        </Fab>
-      </Zoom>
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            style={{
+              position: 'fixed',
+              bottom: 20,
+              right: 20,
+              zIndex: 1000
+            }}
+          >
+            <Fab 
+              color="primary" 
+              size="medium" 
+              aria-label="scroll back to top"
+              onClick={scrollToTop}
+              sx={{
+                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+              }}
+            >
+              <KeyboardArrowUp />
+            </Fab>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }; 

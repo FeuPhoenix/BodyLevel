@@ -20,6 +20,7 @@ import {
   Whatshot
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { slideInLeft, slideInRight } from '../../utils/animationVariants';
 
 export const Header: React.FC = () => {
   const theme = useTheme();
@@ -28,14 +29,13 @@ export const Header: React.FC = () => {
   // Calculate total XP and level
   const completedSkills = skills.filter(skill => skill.status === 'completed');
   const totalXP = completedSkills.reduce((total, skill) => total + (skill.level * 100), 0);
-  const userLevel = Math.max(1, Math.floor(totalXP / 500) + 1);
+  const level = Math.floor(totalXP / 500) + 1;
   
   return (
     <AppBar 
-      position="static" 
-      elevation={0} 
+      position="sticky" 
+      elevation={0}
       sx={{ 
-        mb: 0,
         background: theme.palette.mode === 'dark' 
           ? 'linear-gradient(90deg, #121212 0%, #1E1E1E 100%)'
           : 'linear-gradient(90deg, #FFFFFF 0%, #F5F5F5 100%)',
@@ -45,22 +45,34 @@ export const Header: React.FC = () => {
       <Container maxWidth="xl">
         <Toolbar sx={{ py: 1 }}>
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
+            variants={slideInLeft}
+            initial="hidden"
+            animate="show"
           >
             <Box display="flex" alignItems="center">
-              <Avatar
-                sx={{ 
-                  bgcolor: theme.palette.primary.main,
-                  width: 40,
-                  height: 40,
-                  mr: 1.5,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{ 
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity, 
+                  repeatType: "reverse" as const
                 }}
               >
-                <FitnessCenterRounded />
-              </Avatar>
+                <Avatar
+                  sx={{ 
+                    bgcolor: theme.palette.primary.main,
+                    width: 40,
+                    height: 40,
+                    mr: 1.5,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  <FitnessCenterRounded />
+                </Avatar>
+              </motion.div>
               <Typography 
                 variant="h5" 
                 component="div" 
@@ -79,106 +91,70 @@ export const Header: React.FC = () => {
           
           <Box sx={{ flexGrow: 1 }} />
           
-          {/* Game stats */}
-          <Box 
-            sx={{ 
-              display: { xs: 'none', md: 'flex' }, 
-              alignItems: 'center', 
-              gap: 3,
-              mr: 3
-            }}
+          <motion.div
+            variants={slideInRight}
+            initial="hidden"
+            animate="show"
           >
-            <Tooltip title="Your Level">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  badgeContent={
-                    <Avatar
-                      sx={{ 
-                        width: 22, 
-                        height: 22, 
-                        bgcolor: theme.palette.primary.main,
-                        border: '2px solid white',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold'
-                      }}
+            <Box display="flex" alignItems="center" gap={2}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    bgcolor: 'background.paper', 
+                    py: 0.5, 
+                    px: 2, 
+                    borderRadius: 20,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Tooltip title="Your Level">
+                    <Badge
+                      overlap="circular"
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                      badgeContent={
+                        <Avatar sx={{ width: 22, height: 22, bgcolor: theme.palette.secondary.main, fontSize: '0.8rem' }}>
+                          {level}
+                        </Avatar>
+                      }
                     >
-                      {userLevel}
-                    </Avatar>
-                  }
-                >
-                  <Avatar
-                    sx={{ 
-                      bgcolor: 'transparent',
-                      border: `2px solid ${theme.palette.primary.main}`,
-                      color: theme.palette.primary.main
-                    }}
-                  >
-                    <EmojiEvents />
-                  </Avatar>
-                </Badge>
-                <Box sx={{ ml: 1 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
-                    Level
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {userLevel}
-                  </Typography>
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main, width: 35, height: 35 }}>
+                        <EmojiEvents fontSize="small" />
+                      </Avatar>
+                    </Badge>
+                  </Tooltip>
+                  
+                  <Box sx={{ ml: 1.5 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
+                      XP Points
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Whatshot sx={{ color: '#FF9800', fontSize: 16, mr: 0.5 }} />
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {totalXP}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
-              </Box>
-            </Tooltip>
-            
-            <Tooltip title="Total XP">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar
-                  sx={{ 
-                    bgcolor: 'transparent',
-                    border: `2px solid ${theme.palette.secondary.main}`,
-                    color: theme.palette.secondary.main
-                  }}
-                >
-                  <Whatshot />
-                </Avatar>
-                <Box sx={{ ml: 1 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
-                    XP
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {totalXP}
-                  </Typography>
-                </Box>
-              </Box>
-            </Tooltip>
-            
-            <Tooltip title="Completed Skills">
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar
-                  sx={{ 
-                    bgcolor: 'transparent',
-                    border: `2px solid #00B0FF`,
-                    color: '#00B0FF'
-                  }}
-                >
-                  <FitnessCenterRounded />
-                </Avatar>
-                <Box sx={{ ml: 1 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1 }}>
-                    Skills
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {completedSkills.length}/{skills.length}
-                  </Typography>
-                </Box>
-              </Box>
-            </Tooltip>
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <ProgressImportExport />
-            <ProgressReset />
-            <ThemeToggle />
-          </Box>
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <ThemeToggle />
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <ProgressReset />
+              </motion.div>
+              
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <ProgressImportExport />
+              </motion.div>
+            </Box>
+          </motion.div>
         </Toolbar>
       </Container>
     </AppBar>
