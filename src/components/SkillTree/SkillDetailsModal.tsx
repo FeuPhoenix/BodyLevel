@@ -7,7 +7,6 @@ import {
   Button,
   Typography,
   Box,
-  Divider,
   List,
   ListItem,
   ListItemIcon,
@@ -16,44 +15,23 @@ import {
   Chip,
   Grid,
   useTheme,
-  ButtonGroup,
   Paper,
-  Avatar,
-  Badge,
-  LinearProgress
+  Avatar
 } from '@mui/material';
 import {
   Close,
   FitnessCenter,
   CheckCircle,
-  ArrowUpward,
-  ArrowDownward,
   Info,
   PlayArrow,
   EmojiEvents,
   Star,
-  StarBorder,
   Whatshot,
   AddCircle,
   RemoveCircle
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSkillProgress } from '../../hooks';
-
-// Define a simple confetti function if the canvas-confetti package is not available
-const triggerConfetti = (options: any = {}) => {
-  try {
-    // Try to dynamically import canvas-confetti
-    import('canvas-confetti').then(confettiModule => {
-      const confetti = confettiModule.default;
-      confetti(options);
-    }).catch(err => {
-      console.warn('Confetti effect not available:', err);
-    });
-  } catch (error) {
-    console.warn('Confetti effect not available:', error);
-  }
-};
 
 interface SkillDetailsModalProps {
   open: boolean;
@@ -79,52 +57,13 @@ export const SkillDetailsModal: React.FC<SkillDetailsModalProps> = ({
     percentComplete
   } = useSkillProgress(skillId);
   
-  const [showConfetti, setShowConfetti] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
   
   // Trigger confetti effect when skill is completed
   useEffect(() => {
     if (isCompleted && open) {
-      setShowConfetti(true);
-      
-      // Trigger confetti
-      const duration = 3 * 1000;
-      const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
-
-      const randomInRange = (min: number, max: number) => {
-        return Math.random() * (max - min) + min;
-      };
-
-      const interval = setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-          return clearInterval(interval);
-        }
-
-        const particleCount = 50 * (timeLeft / duration);
-        
-        // Random colors
-        triggerConfetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-          colors: ['#00E676', '#6200EA', '#FFAB00'],
-        });
-        triggerConfetti({
-          ...defaults,
-          particleCount,
-          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-          colors: ['#00B0FF', '#F44336', '#FFAB00'],
-        });
-      }, 250);
-      
-      // Show level up animation
       setShowLevelUp(true);
       setTimeout(() => setShowLevelUp(false), 3000);
-      
-      return () => clearInterval(interval);
     }
   }, [isCompleted, open]);
 

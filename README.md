@@ -21,35 +21,6 @@ BodyLevel is a web application that helps you track your progress in calisthenic
 - Redux Toolkit
 - Framer Motion
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-   ```
-   git clone https://github.com/FeuPhoenix/BodyLevel.git
-   ```
-
-2. Navigate to the project directory:
-   ```
-   cd BodyLevel
-   ```
-
-3. Install dependencies:
-   ```
-   npm install
-   ```
-
-4. Start the development server:
-   ```
-   npm run dev
-   ```
-
 ## Usage
 
 - Browse the skill tree to find exercises appropriate for your level

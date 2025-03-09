@@ -1,16 +1,9 @@
 import { SkillCategory } from '../types';
 
 // Base URLs for media resources
-const IMAGE_BASE_URL = 'https://wger.de/api/v2/exerciseimage/?format=json&limit=20&exercise=';
 const VIDEO_BASE_URL = 'https://www.youtube.com/embed/';
 
 // Exercise IDs from wger.de API for different categories
-const EXERCISE_IDS: Record<SkillCategory, number[]> = {
-  'Push': [97, 83, 163, 168, 167, 172],  // Various push-ups and dips
-  'Pull': [109, 129, 181, 105, 106, 107], // Pull-ups and rows
-  'Legs': [111, 112, 177, 113, 130, 154], // Squats and lunges
-  'Core': [91, 93, 128, 174, 176, 59]     // Planks, crunches, etc.
-};
 
 // YouTube video IDs for different exercises
 const VIDEO_IDS: Record<SkillCategory, string[]> = {

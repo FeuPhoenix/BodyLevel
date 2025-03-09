@@ -4,7 +4,6 @@ import {
   FitnessCenterOutlined, 
   FitnessCenterTwoTone,
   HomeOutlined,
-  FitnessCenterRounded
 } from '@mui/icons-material';
 import { SkillCategory } from '../../types';
 

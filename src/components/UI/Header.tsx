@@ -6,8 +6,6 @@ import {
   Box, 
   useTheme, 
   Container,
-  Button,
-  IconButton,
   Avatar,
   Badge,
   Tooltip
@@ -26,7 +24,6 @@ import { motion } from 'framer-motion';
 export const Header: React.FC = () => {
   const theme = useTheme();
   const skills = useAppSelector(state => state.skills.skills);
-  const progress = useAppSelector(state => state.skills.progress);
   
   // Calculate total XP and level
   const completedSkills = skills.filter(skill => skill.status === 'completed');

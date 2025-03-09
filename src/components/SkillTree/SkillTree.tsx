@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { Box, Typography, Grid, Paper, useTheme, Button, Alert } from '@mui/material';
+import { Box, Typography, Grid, Paper, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 import { SkillCard } from './SkillCard';
 import { Skill, SkillCategory } from '../../types';
@@ -7,10 +6,10 @@ import { FitnessCenter, Whatshot } from '@mui/icons-material';
 import { useAppSelector } from '../../hooks';
 
 interface SkillTreeProps {
-  category: SkillCategory | 'All';
+  category?: SkillCategory | 'All';
 }
 
-export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
+export const SkillTree = ({ category = 'All' }: SkillTreeProps) => {
   const theme = useTheme();
   const skills = useAppSelector(state => state.skills.skills);
   
@@ -36,7 +35,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
   };
   
   // Get category icon
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = () => {
     return <FitnessCenter />;
   };
   
@@ -45,15 +44,16 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
   
   // Organize skills by category and level
   currentSkills.forEach(skill => {
-    if (!skillsByCategory[skill.category]) {
-      skillsByCategory[skill.category] = [];
+    const category = skill.category;
+    if (!skillsByCategory[category]) {
+      skillsByCategory[category] = [];
     }
     
-    if (!skillsByCategory[skill.category][skill.level - 1]) {
-      skillsByCategory[skill.category][skill.level - 1] = [];
+    if (!skillsByCategory[category][skill.level - 1]) {
+      skillsByCategory[category][skill.level - 1] = [];
     }
     
-    skillsByCategory[skill.category][skill.level - 1].push(skill);
+    skillsByCategory[category][skill.level - 1].push(skill);
   });
   
   // Render a category section
@@ -98,7 +98,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
                   boxShadow: `0 4px 10px ${getCategoryColor(categoryName)}66`
                 }}
               >
-                {getCategoryIcon(categoryName)}
+                {getCategoryIcon()}
               </Box>
               <Typography variant="h4" component="h2" sx={{ fontWeight: 'bold', color: getCategoryColor(categoryName) }}>
                 {categoryName} Skills
@@ -211,9 +211,9 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
   };
   
   // Get categories to render
-  const categoriesToRender = category === 'All' 
+  const categoriesToRender = true 
     ? Object.keys(skillsByCategory) 
-    : [category];
+    : ['Push'];
   
   // Check if any categories are being displayed
   const hasVisibleCategories = categoriesToRender.some(cat => 
@@ -244,7 +244,7 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ category }) => {
         >
           <FitnessCenter sx={{ fontSize: 60, color: 'text.secondary', mb: 2, opacity: 0.5 }} />
           <Typography variant="h5" color="text.secondary" gutterBottom>
-            No skills found for {category === 'All' ? 'any category' : `the ${category} category`}
+            No skills found for {categoriesToRender[0] === 'All' ? 'any category' : `the ${categoriesToRender[0]} category`}
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center">
             Try selecting a different category

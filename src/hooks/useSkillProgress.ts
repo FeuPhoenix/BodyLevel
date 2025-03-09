@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppSelector, useAppDispatch } from './';
 import { updateSkillProgress } from '../features/skills/skillsSlice';
-import { Skill, SkillProgress } from '../types';
 
 export const useSkillProgress = (skillId: string) => {
   const dispatch = useAppDispatch();

@@ -6,19 +6,15 @@ import {
   Box, 
   LinearProgress, 
   Chip,
-  IconButton,
   Tooltip,
   useTheme,
-  Badge
 } from '@mui/material';
 import { 
   LockOutlined, 
   LockOpenOutlined, 
   CheckCircleOutline,
   PlayCircleOutline,
-  InfoOutlined,
   Star,
-  StarBorder
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { Skill, SkillStatus } from '../../types';
