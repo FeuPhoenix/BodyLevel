@@ -1,0 +1,22 @@
+To create a favicon for BodyLevel:
+
+1. Create a simple icon representing fitness, such as:
+   - A dumbbell
+   - A person doing a push-up
+   - A simple silhouette of a person exercising
+   - The letters "BL" in a fitness-themed design
+
+2. Save the icon as favicon.ico in this directory
+
+3. You can use online tools like favicon.io or realfavicongenerator.net to create a proper favicon
+
+4. For a complete set of favicons for different devices, consider creating:
+   - favicon.ico (16x16, 32x32)
+   - apple-touch-icon.png (180x180)
+   - android-chrome-192x192.png
+   - android-chrome-512x512.png
+
+The favicon should use the app's primary color scheme, which includes:
+- Primary: #2196F3 (Blue)
+- Secondary: #FF9800 (Orange)
+- Accent colors from the exercise categories 
