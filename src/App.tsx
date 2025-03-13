@@ -5,12 +5,14 @@ import { ThemeProvider } from './components/UI/ThemeProvider';
 import { Layout } from './components/UI/Layout';
 import { Home } from './components/Home';
 import { AuthPage, DevLogin } from './components/Auth';
-import { ProfileDashboard } from './components/Profile';
-import { SkillTreeVisualization } from './components/Skills';
-import { AdminDashboard } from './components/Admin';
+import { ProfileDashboard } from './components/Profile/ProfileDashboard';
+import { SkillTreeVisualization } from './components/Skills/SkillTreeVisualization';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { useAuth } from './hooks/useAuth';
 import { Box, CircularProgress, Typography, Button, Alert } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Header } from './components/UI/Header';
+import { UserProfile } from './components/Auth/UserProfile';
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -202,6 +204,8 @@ const AppContent = () => {
             </AdminRoute>
           } 
         />
+        <Route path="/dev-login" element={<DevLogin />} />
+        <Route path="/user-profile" element={<UserProfile />} />
       </Routes>
     </Layout>
   );
@@ -212,7 +216,9 @@ function App() {
     <Provider store={store}>
       <ThemeProvider>
         <Router>
-          <AppContent />
+          <div className="App">
+            <AppContent />
+          </div>
         </Router>
       </ThemeProvider>
     </Provider>

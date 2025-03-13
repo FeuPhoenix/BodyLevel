@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../hooks';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -15,13 +15,10 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Card,
-  CardContent,
   Grid,
   Divider,
   Fab,
   Slider,
-  ButtonGroup,
   useMediaQuery,
 } from '@mui/material';
 import {
@@ -29,22 +26,18 @@ import {
   LockOutlined,
   CheckCircleOutlined,
   PlayCircleOutlined,
-  InfoOutlined,
   Close,
   ArrowForward,
   Home,
-  ZoomIn,
-  ZoomOut,
-  Refresh,
   Add,
   Remove,
+  Refresh,
   ArrowBack,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
 // Define the node size and spacing
 const NODE_SIZE = 100;
-const HORIZONTAL_SPACING = 220;
 const VERTICAL_SPACING = 180;
 
 // Define the skill categories and their colors
@@ -62,15 +55,13 @@ const forceNavigateHome = () => {
 
 export const SkillTreeVisualization = () => {
   const theme = useTheme();
-  const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const skills = useAppSelector(state => state.skills.skills);
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedSkill, setSelectedSkill] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [svgDimensions, setSvgDimensions] = useState({ width: 1000, height: 800 });
-  const [zoomLevel, setZoomLevel] = useState(isMobile ? 0.6 : 1);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -239,41 +230,6 @@ export const SkillTreeVisualization = () => {
     setConnections(connectionsData);
   }, [nodePositions, skills]);
 
-  // Set initial zoom level based on device
-  useEffect(() => {
-    setZoomLevel(isMobile ? 0.6 : 1);
-  }, [isMobile]);
-
-  // Handle mouse wheel for zooming
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    setZoomLevel(prev => Math.max(0.5, Math.min(2, prev + delta)));
-  };
-
-  // Handle mouse down for panning
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 0) { // Left mouse button
-      setIsDragging(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  // Handle mouse move for panning
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      const dx = e.clientX - dragStart.x;
-      const dy = e.clientY - dragStart.y;
-      setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-      setDragStart({ x: e.clientX, y: e.clientY });
-    }
-  };
-
-  // Handle mouse up to stop panning
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
   // Handle skill node click
   const handleSkillClick = (skill: any) => {
     setSelectedSkill(skill);
@@ -287,82 +243,13 @@ export const SkillTreeVisualization = () => {
 
   // Reset zoom and pan
   const handleResetView = () => {
-    setZoomLevel(isMobile ? 0.6 : 1);
+    setZoomLevel(1);
     setPan({ x: 0, y: 0 });
   };
-
-  // Zoom in
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(2, prev + 0.1));
-  };
-
-  // Zoom out
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(0.5, prev - 0.1));
-  };
-
-  // Go back to home using direct window.location
-  const handleGoHome = () => {
-    try {
-      console.log("Attempting to navigate to home");
-      forceNavigateHome();
-    } catch (error) {
-      console.error("Navigation error:", error);
-      // Fallback if even that fails
-      window.location.replace('/');
-    }
-  };
-
-  // Add keyboard navigation for escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Allow Escape key to navigate home
-      if (e.key === 'Escape') {
-        handleGoHome();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   // Render the skill tree
   return (
     <Box sx={{ mt: 2, mb: 8, position: 'relative', height: 'calc(100vh - 150px)' }}>
-      {/* Multiple emergency escape buttons - always visible */}
-      <Box sx={{ 
-        position: 'fixed', 
-        top: 80, 
-        right: 20, 
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2
-      }}>
-        <Fab
-          color="primary"
-          aria-label="home"
-          onClick={handleGoHome}
-          sx={{ boxShadow: '0 0 10px rgba(0,0,0,0.3)' }}
-        >
-          <Home />
-        </Fab>
-        <Tooltip title="Press ESC to go home">
-          <Box sx={{ 
-            bgcolor: 'background.paper', 
-            p: 1, 
-            borderRadius: 1, 
-            boxShadow: '0 0 10px rgba(0,0,0,0.2)',
-            textAlign: 'center',
-            fontSize: '12px'
-          }}>
-            Press ESC
-          </Box>
-        </Tooltip>
-      </Box>
-
       <Paper 
         elevation={2} 
         sx={{ 
@@ -385,12 +272,11 @@ export const SkillTreeVisualization = () => {
             Skill Tree
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {/* Direct home button using window.location */}
             <Button 
               variant="contained" 
               color="primary"
               startIcon={<ArrowBack />}
-              onClick={handleGoHome}
+              onClick={forceNavigateHome}
               sx={{ mr: 1 }}
             >
               Back to Home
@@ -465,19 +351,36 @@ export const SkillTreeVisualization = () => {
             sx={{ 
               position: 'relative', 
               width: '100%', 
-              height: { xs: 'calc(100% - 120px)', sm: 'calc(100% - 100px)' },
+              height: 'calc(100% - 120px)',
               overflow: 'hidden',
               border: `1px solid ${theme.palette.divider}`,
               borderRadius: 1,
               bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)',
               cursor: isDragging ? 'grabbing' : 'grab',
             }}
-            onWheel={handleWheel}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            onWheel={(e) => {
+              e.preventDefault();
+              const delta = e.deltaY > 0 ? -0.1 : 0.1;
+              setZoomLevel(prev => Math.max(0.5, Math.min(2, prev + delta)));
+            }}
+            onMouseDown={(e) => {
+              if (e.button === 0) { // Left mouse button
+                setIsDragging(true);
+                setDragStart({ x: e.clientX, y: e.clientY });
+              }
+            }}
+            onMouseMove={(e) => {
+              if (isDragging) {
+                const dx = e.clientX - dragStart.x;
+                const dy = e.clientY - dragStart.y;
+                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                setDragStart({ x: e.clientX, y: e.clientY });
+              }
+            }}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
             onTouchStart={(e) => {
+              e.preventDefault();
               setIsDragging(true);
               setDragStart({ 
                 x: e.touches[0].clientX, 
@@ -712,44 +615,6 @@ export const SkillTreeVisualization = () => {
             </svg>
           </Box>
         )}
-
-        {/* Zoom controls */}
-        <Box 
-          sx={{ 
-            position: 'absolute', 
-            bottom: 20, 
-            right: 20,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-            zIndex: 10,
-          }}
-        >
-          <Fab 
-            color="primary" 
-            size="small" 
-            onClick={handleZoomIn}
-            aria-label="zoom in"
-          >
-            <Add />
-          </Fab>
-          <Fab 
-            color="primary" 
-            size="small" 
-            onClick={handleZoomOut}
-            aria-label="zoom out"
-          >
-            <Remove />
-          </Fab>
-          <Fab 
-            color="secondary" 
-            size="small" 
-            onClick={handleResetView}
-            aria-label="reset view"
-          >
-            <Refresh />
-          </Fab>
-        </Box>
 
         {/* Zoom level indicator */}
         <Box 
