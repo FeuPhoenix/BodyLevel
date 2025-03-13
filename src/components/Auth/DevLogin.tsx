@@ -5,20 +5,18 @@ import {
   Paper,
   TextField,
   Button,
-  useTheme,
 } from '@mui/material';
 import { useAppDispatch } from '../../hooks';
 import { login } from '../../features/auth/authSlice';
 
 export const DevLogin = () => {
-  const theme = useTheme();
   const dispatch = useAppDispatch();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(login({ username, password }));
+    dispatch(login({ email, password }));
   };
 
   return (
@@ -49,11 +47,12 @@ export const DevLogin = () => {
 
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Username"
+            label="Email"
+            type="email"
             fullWidth
             margin="normal"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <TextField
             label="Password"

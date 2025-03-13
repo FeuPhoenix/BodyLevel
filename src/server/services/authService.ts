@@ -70,9 +70,9 @@ export async function registerUser(userData: RegisterUserData): Promise<User> {
     
     // Set default role to 'user'
     // For demo purposes, make the first user an admin
-    let role = 'user';
+    let role: 'user' | 'admin' = 'user';
     try {
-      const countResult = await db.query('SELECT COUNT(*) as count FROM users', []);
+      const countResult = await db.query('SELECT COUNT(*) as count FROM users', []) as { count: number }[];
       const isFirstUser = countResult.length > 0 && countResult[0].count === 0;
       role = isFirstUser ? 'admin' : 'user';
     } catch (error) {

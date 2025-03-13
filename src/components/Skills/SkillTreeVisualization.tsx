@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppSelector } from '../../hooks';
 import { Navigate } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   Typography,
   Paper,
   useTheme,
-  Tooltip,
   CircularProgress,
   Chip,
   Button,
@@ -17,9 +16,7 @@ import {
   IconButton,
   Grid,
   Divider,
-  Fab,
   Slider,
-  useMediaQuery,
 } from '@mui/material';
 import {
   FitnessCenterRounded,
@@ -28,13 +25,8 @@ import {
   PlayCircleOutlined,
   Close,
   ArrowForward,
-  Home,
-  Add,
-  Remove,
-  Refresh,
   ArrowBack,
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 
 // Define the node size and spacing
 const NODE_SIZE = 100;
@@ -48,10 +40,10 @@ const CATEGORY_COLORS = {
   Core: '#ff9800', // Orange
 };
 
-// Emergency escape function that will always work
-const forceNavigateHome = () => {
-  window.location.href = '/';
-};
+// No longer needed since we have handleForceNavigateHome
+// const forceNavigateHome = () => {
+//   window.location.href = '/';
+// };
 
 export const SkillTreeVisualization = () => {
   const theme = useTheme();
@@ -70,6 +62,11 @@ export const SkillTreeVisualization = () => {
   const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
   const [connections, setConnections] = useState<{ from: string; to: string; fromX: number; fromY: number; toX: number; toY: number }[]>([]);
   const [organizedSkills, setOrganizedSkills] = useState<Record<string, Record<number, any[]>>>({});
+
+  // Update forceNavigateHome to use setRedirectToHome
+  const handleForceNavigateHome = () => {
+    setRedirectToHome(true);
+  };
 
   // If redirectToHome is true, navigate to home
   if (redirectToHome) {
@@ -276,7 +273,7 @@ export const SkillTreeVisualization = () => {
               variant="contained" 
               color="primary"
               startIcon={<ArrowBack />}
-              onClick={forceNavigateHome}
+              onClick={handleForceNavigateHome}
               sx={{ mr: 1 }}
             >
               Back to Home

@@ -4,14 +4,13 @@ import { store } from './features/store';
 import { ThemeProvider } from './components/UI/ThemeProvider';
 import { Layout } from './components/UI/Layout';
 import { Home } from './components/Home';
-import { AuthPage, DevLogin } from './components/Auth';
+import { DevLogin } from './components/Auth';
 import { ProfileDashboard } from './components/Profile/ProfileDashboard';
 import { SkillTreeVisualization } from './components/Skills/SkillTreeVisualization';
 import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { useAuth } from './hooks/useAuth';
 import { Box, CircularProgress, Typography, Button, Alert } from '@mui/material';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Header } from './components/UI/Header';
 import { UserProfile } from './components/Auth/UserProfile';
 
 // Protected route component
@@ -52,7 +51,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   
   // Temporarily allow all authenticated users to access admin dashboard
   // In production, you would use: const isAdmin = user?.role === 'admin';
-  const isAdmin = true; // For testing purposes
+  // const isAdmin = true; // For testing purposes
   
   if (isLoading) {
     return (

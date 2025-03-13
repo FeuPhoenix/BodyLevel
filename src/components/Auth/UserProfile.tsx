@@ -18,12 +18,12 @@ import {
 
 export const UserProfile = () => {
   const theme = useTheme();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, profile } = useAppSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
-    bio: user?.bio || '',
+    bio: profile?.bio || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

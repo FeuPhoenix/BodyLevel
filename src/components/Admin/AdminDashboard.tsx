@@ -57,7 +57,11 @@ export const AdminDashboard = () => {
 
   return (
     <Box sx={{ mt: 2, mb: 8 }}>
-      <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+      <Paper elevation={2} sx={{ 
+        p: 3, 
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.paper
+      }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h5" fontWeight="bold">
             Admin Dashboard
