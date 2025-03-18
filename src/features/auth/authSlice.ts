@@ -67,30 +67,28 @@ const initialState: AuthState = {
 // Async thunks
 export const login = createAsyncThunk(
   'auth/login',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
+  async (
+    { email, password, username, role }: 
+    { email: string; password: string; username?: string; role?: 'user' | 'admin' },
+    { rejectWithValue }
+  ) => {
     try {
       // For development: Check if running in development environment
       if (import.meta.env.DEV) {
         console.log('Using mock authentication in development mode');
         
-        // Check if user exists in localStorage
-        const users = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-        const user = users.find((u: any) => u.email === email);
+        // Generate a random user ID if not existing
+        const userId = `user_${Math.random().toString(36).substring(2, 10)}`;
         
-        if (!user) {
-          console.log('User not found in mockUsers:', email);
-          console.log('Available mock users:', users);
-          return rejectWithValue('User not found. Please register first.');
-        }
-        
-        if (user.password !== password) {
-          console.log('Invalid credentials for user:', email);
-          return rejectWithValue('Invalid credentials');
-        }
+        // Create a user object with all provided data
+        const userData = {
+          id: userId,
+          email,
+          username: username || email.split('@')[0],
+          role: role || 'user'
+        };
         
         // Create a mock response
-        const { password: _, ...userData } = user;
-        
         const result = {
           user: userData,
           profile: {

@@ -26,6 +26,7 @@ import {
   Alert,
   AlertProps,
   DialogContentText,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Edit,
@@ -387,6 +388,20 @@ export const SkillManagement = () => {
     });
   };
 
+  const handleCategoryChange = (e: SelectChangeEvent<SkillCategory>) => {
+    setFormData(prev => ({
+      ...prev,
+      category: e.target.value as SkillCategory
+    }));
+  };
+
+  const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive'>) => {
+    setFormData(prev => ({
+      ...prev,
+      status: e.target.value as 'active' | 'inactive'
+    }));
+  };
+
   return (
     <Box>
       <Box sx={{ 
@@ -520,8 +535,8 @@ export const SkillManagement = () => {
               <Select
                 label="Category"
                 name="category"
-                value={formData.category || ''}
-                onChange={handleInputChange}
+                value={formData.category || 'Push'}
+                onChange={handleCategoryChange}
               >
                 <MenuItem value="Push">Push</MenuItem>
                 <MenuItem value="Pull">Pull</MenuItem>
@@ -552,7 +567,7 @@ export const SkillManagement = () => {
                 label="Status"
                 name="status"
                 value={formData.status || 'active'}
-                onChange={handleInputChange}
+                onChange={handleStatusChange}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>

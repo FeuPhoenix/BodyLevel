@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import {
-  AppBar,
+import { 
+  AppBar, 
   Box,
-  Toolbar,
+  Toolbar, 
   IconButton,
-  Typography,
+  Typography, 
   Menu,
   Container,
   Avatar,
@@ -17,29 +17,26 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-  useMediaQuery,
   useTheme,
   alpha,
-  Badge,
   Divider,
   Fade,
 } from '@mui/material';
-import {
+import { 
   Menu as MenuIcon,
-  AccountCircle,
   Logout,
   Dashboard,
   Person,
   Home,
-  FitnessCenterRounded,
+  FitnessCenterRounded, 
   KeyboardArrowRight,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { logout } from '../../features/auth/authSlice';
+import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const location = useLocation();
@@ -51,14 +48,11 @@ export const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Track scrolling to change AppBar appearance
   useEffect(() => {
     const handleScroll = () => {
-      const offset = window.scrollY;
-      if (offset > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
+      const isScrolled = window.scrollY > 20;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
       }
     };
 
@@ -66,7 +60,7 @@ export const Header = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [scrolled]);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -76,243 +70,138 @@ export const Header = () => {
     setAnchorElUser(null);
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   const handleLogout = () => {
     dispatch(logout());
-    handleCloseUserMenu();
-  };
-
-  // Check if a route is active
-  const isActive = (path: string) => location.pathname === path;
-
-  // Get badge count (for notifications, can be implemented later)
-  const getBadgeCount = () => {
-    return 0; // Placeholder for future notification system
+    setAnchorElUser(null);
   };
 
   return (
     <AppBar 
       position="sticky" 
-      sx={{
-        background: scrolled 
-          ? `linear-gradient(145deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})` 
-          : 'transparent',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.15)' : 'none',
-        transition: 'all 0.3s ease-in-out',
-        color: scrolled ? '#fff' : theme.palette.text.primary,
+      elevation={scrolled ? 4 : 0}
+      sx={{ 
+        backgroundColor: scrolled 
+          ? alpha(theme.palette.background.paper, 0.9)
+          : theme.palette.background.paper,
+        backdropFilter: 'blur(8px)',
+        transition: 'all 0.3s',
       }}
     >
       <Container maxWidth="xl">
-        <Toolbar disableGutters sx={{ py: 0.5, position: 'relative' }}>
-          {/* Logo for larger screens */}
-          <Box 
-            component={RouterLink} 
+        <Toolbar disableGutters>
+          {/* Logo - visible on all screen sizes */}
+          <Typography
+            variant="h6"
+            component={RouterLink}
             to="/"
-            sx={{ 
-              display: { xs: 'none', md: 'flex' }, 
+            sx={{
+              mr: 2,
+              fontWeight: 800,
+              color: theme.palette.primary.main,
               textDecoration: 'none',
-              color: 'inherit',
+              display: 'flex',
               alignItems: 'center',
-              transition: 'transform 0.3s ease',
-              position: 'relative',
-              zIndex: 2,
-              '&:hover': {
-                transform: 'scale(1.05)',
-              }
+              flexShrink: 0,
             }}
           >
-            <FitnessCenterRounded sx={{ mr: 1, fontSize: 28 }} />
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 700,
-                color: 'inherit',
-                letterSpacing: '0.05em',
-                background: scrolled ? 'none' : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                WebkitBackgroundClip: scrolled ? 'none' : 'text',
-                WebkitTextFillColor: scrolled ? 'inherit' : 'transparent',
-              }}
-            >
-              BodyLevel
-            </Typography>
-          </Box>
+            <FitnessCenterRounded sx={{ mr: 1 }} />
+            BODYLEVEL
+          </Typography>
 
-          {/* Mobile menu icon - only show on mobile */}
-          <Box sx={{ flexGrow: 0, display: { xs: 'flex', md: 'none' } }}>
+          {/* Mobile menu icon */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
               aria-label="menu"
-              onClick={handleDrawerToggle}
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={() => setMobileOpen(true)}
               color="inherit"
-              sx={{
-                background: alpha(theme.palette.primary.main, 0.1),
-                '&:hover': {
-                  background: alpha(theme.palette.primary.main, 0.2),
-                },
-                borderRadius: 2,
-              }}
             >
               <MenuIcon />
             </IconButton>
           </Box>
 
-          {/* Logo for mobile */}
-          <Box 
-            component={RouterLink} 
-            to="/"
-            sx={{ 
-              flexGrow: 1, 
-              display: { xs: 'flex', md: 'none' },
-              textDecoration: 'none',
-              color: 'inherit',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <FitnessCenterRounded sx={{ mr: 1, fontSize: 24 }} />
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: 'inherit',
-                letterSpacing: '0.05em',
-                background: scrolled ? 'none' : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                WebkitBackgroundClip: scrolled ? 'none' : 'text',
-                WebkitTextFillColor: scrolled ? 'inherit' : 'transparent',
-              }}
-            >
-              BodyLevel
-            </Typography>
-          </Box>
-
-          {/* Desktop navigation */}
-          <Box 
-            sx={{ 
-              flexGrow: 1, 
+          {/* Navigation - desktop */}
+          <Box
+            sx={{
+              flexGrow: 1,
               display: { xs: 'none', md: 'flex' },
               justifyContent: 'center',
               alignItems: 'center',
-              gap: 2,
+              gap: 3,
               position: 'absolute',
               left: '50%',
               transform: 'translateX(-50%)',
               width: 'auto',
-              zIndex: 1
+              zIndex: 1,
             }}
           >
             {isAuthenticated && (
               <>
                 <Button
                   component={RouterLink}
+                  to="/"
+                  sx={{
+                    color: location.pathname === '/' ? theme.palette.primary.main : 'text.primary',
+                    fontWeight: location.pathname === '/' ? 700 : 500,
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  Home
+                </Button>
+                
+                <Button
+                  component={RouterLink}
                   to="/skills"
                   sx={{
-                    borderRadius: 2,
-                    px: 2,
-                    py: 1,
-                    position: 'relative',
-                    color: isActive('/skills') ? theme.palette.primary.contrastText : 'inherit',
-                    backgroundColor: isActive('/skills') 
-                      ? alpha(theme.palette.primary.main, 0.9)
-                      : 'transparent',
+                    color: location.pathname === '/skills' ? theme.palette.primary.main : 'text.primary',
+                    fontWeight: location.pathname === '/skills' ? 700 : 500,
+                    textTransform: 'none',
+                    fontSize: '1rem',
                     '&:hover': {
-                      backgroundColor: isActive('/skills')
-                        ? alpha(theme.palette.primary.main, 0.8)
-                        : alpha(theme.palette.primary.main, 0.1),
-                    },
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease-in-out',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: '50%',
-                      width: isActive('/skills') ? '100%' : '0%',
-                      height: '3px',
-                      backgroundColor: theme.palette.secondary.main,
-                      transform: 'translateX(-50%)',
-                      transition: 'width 0.3s ease-in-out',
-                    },
-                    '&:hover::after': {
-                      width: '80%',
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.primary.main,
                     },
                   }}
                 >
                   Skills
                 </Button>
+                
                 <Button
                   component={RouterLink}
                   to="/profile"
                   sx={{
-                    borderRadius: 2,
-                    px: 2,
-                    py: 1,
-                    position: 'relative',
-                    color: isActive('/profile') ? theme.palette.primary.contrastText : 'inherit',
-                    backgroundColor: isActive('/profile') 
-                      ? alpha(theme.palette.primary.main, 0.9)
-                      : 'transparent',
+                    color: location.pathname === '/profile' ? theme.palette.primary.main : 'text.primary',
+                    fontWeight: location.pathname === '/profile' ? 700 : 500,
+                    textTransform: 'none',
+                    fontSize: '1rem',
                     '&:hover': {
-                      backgroundColor: isActive('/profile')
-                        ? alpha(theme.palette.primary.main, 0.8)
-                        : alpha(theme.palette.primary.main, 0.1),
-                    },
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease-in-out',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: 0,
-                      left: '50%',
-                      width: isActive('/profile') ? '100%' : '0%',
-                      height: '3px',
-                      backgroundColor: theme.palette.secondary.main,
-                      transform: 'translateX(-50%)',
-                      transition: 'width 0.3s ease-in-out',
-                    },
-                    '&:hover::after': {
-                      width: '80%',
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.primary.main,
                     },
                   }}
                 >
                   Profile
                 </Button>
+                
                 {isAdmin && (
                   <Button
                     component={RouterLink}
                     to="/admin"
                     sx={{
-                      borderRadius: 2,
-                      px: 2,
-                      py: 1,
-                      position: 'relative',
-                      color: isActive('/admin') ? theme.palette.primary.contrastText : 'inherit',
-                      backgroundColor: isActive('/admin') 
-                        ? alpha(theme.palette.primary.main, 0.9)
-                        : 'transparent',
+                      color: location.pathname === '/admin' ? theme.palette.primary.main : 'text.primary',
+                      fontWeight: location.pathname === '/admin' ? 700 : 500,
+                      textTransform: 'none',
+                      fontSize: '1rem',
                       '&:hover': {
-                        backgroundColor: isActive('/admin')
-                          ? alpha(theme.palette.primary.main, 0.8)
-                          : alpha(theme.palette.primary.main, 0.1),
-                      },
-                      overflow: 'hidden',
-                      transition: 'all 0.3s ease-in-out',
-                      '&::after': {
-                        content: '""',
-                        position: 'absolute',
-                        bottom: 0,
-                        left: '50%',
-                        width: isActive('/admin') ? '100%' : '0%',
-                        height: '3px',
-                        backgroundColor: theme.palette.secondary.main,
-                        transform: 'translateX(-50%)',
-                        transition: 'width 0.3s ease-in-out',
-                      },
-                      '&:hover::after': {
-                        width: '80%',
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        color: theme.palette.primary.main,
                       },
                     }}
                   >
@@ -323,500 +212,392 @@ export const Header = () => {
             )}
           </Box>
 
-          {/* User menu */}
-          <Box sx={{ flexGrow: 0, ml: 'auto', position: 'relative', zIndex: 2 }}>
-            {isAuthenticated ? (
-              <>
-                <Tooltip title="Account settings">
-                  <IconButton 
-                    onClick={handleOpenUserMenu} 
-                    sx={{ 
-                      p: 0.5,
-                      border: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        border: `2px solid ${theme.palette.primary.main}`,
-                        transform: 'scale(1.05)',
-                      },
-                    }}
-                  >
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                      badgeContent={getBadgeCount()}
-                      color="secondary"
-                    >
-                      <Avatar 
-                        alt={user?.username || 'User'} 
-                        sx={{ 
-                          bgcolor: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                          width: 40,
-                          height: 40,
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {user?.username?.[0] || <Person />}
-                      </Avatar>
-                    </Badge>
-                  </IconButton>
-                </Tooltip>
-                <Menu
-                  sx={{ 
-                    mt: '45px',
-                    '& .MuiPaper-root': {
-                      borderRadius: 2,
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                      overflow: 'visible',
-                      '&:before': {
-                        content: '""',
-                        display: 'block',
-                        position: 'absolute',
-                        top: 0,
-                        right: 14,
-                        width: 10,
-                        height: 10,
-                        bgcolor: 'background.paper',
-                        transform: 'translateY(-50%) rotate(45deg)',
-                        zIndex: 0,
-                      },
-                    },
-                  }}
-                  id="menu-appbar"
-                  anchorEl={anchorElUser}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  keepMounted
-                  transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'right',
-                  }}
-                  open={Boolean(anchorElUser)}
-                  onClose={handleCloseUserMenu}
-                  TransitionComponent={Fade}
-                >
-                  <Box sx={{ px: 2, py: 1.5 }}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      {user?.username}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {user?.email}
-                    </Typography>
-                  </Box>
-
-                  <Divider />
-
-                  <MenuItem 
-                    component={RouterLink} 
-                    to="/"
-                    onClick={handleCloseUserMenu}
-                    sx={{
-                      borderRadius: 1,
-                      mx: 1,
-                      my: 0.5,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      },
-                      '&:hover .MuiListItemIcon-root': {
-                        color: theme.palette.primary.main,
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
-                      <Home fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Home" />
-                  </MenuItem>
-                  <MenuItem 
-                    component={RouterLink} 
-                    to="/profile"
-                    onClick={handleCloseUserMenu}
-                    sx={{
-                      borderRadius: 1,
-                      mx: 1,
-                      my: 0.5,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                      },
-                      '&:hover .MuiListItemIcon-root': {
-                        color: theme.palette.primary.main,
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
-                      <Person fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Profile" />
-                  </MenuItem>
-                  {isAdmin && (
-                    <MenuItem 
-                      component={RouterLink} 
-                      to="/admin"
-                      onClick={handleCloseUserMenu}
-                      sx={{
-                        borderRadius: 1,
-                        mx: 1,
-                        my: 0.5,
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                        },
-                        '&:hover .MuiListItemIcon-root': {
-                          color: theme.palette.primary.main,
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
-                        <Dashboard fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Admin Dashboard" />
-                    </MenuItem>
-                  )}
-
-                  <Divider />
-
-                  <MenuItem 
-                    onClick={handleLogout}
-                    sx={{
-                      borderRadius: 1,
-                      mx: 1,
-                      my: 0.5,
-                      transition: 'all 0.2s',
-                      '&:hover': {
-                        backgroundColor: alpha(theme.palette.error.main, 0.1),
-                      },
-                      '&:hover .MuiListItemIcon-root': {
-                        color: theme.palette.error.main,
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
-                      <Logout fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary="Logout" />
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <Button
-                component={RouterLink}
-                to="/dev-login"
-                variant="contained"
-                sx={{ 
-                  borderRadius: 8,
-                  px: 3, 
-                  py: 1,
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    boxShadow: `0 6px 16px ${alpha(theme.palette.primary.main, 0.6)}`,
-                    transform: 'translateY(-2px)',
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
-              >
-                Login
-              </Button>
-            )}
-          </Box>
-        </Toolbar>
-      </Container>
-
-      {/* Mobile drawer - conditionally render based on isMobile */}
-      <SwipeableDrawer
-        anchor="left"
-        open={mobileOpen}
-        onClose={handleDrawerToggle}
-        onOpen={() => setMobileOpen(true)}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { 
-            boxSizing: 'border-box', 
-            width: 280,
-            borderRadius: '0 16px 16px 0',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-          },
-        }}
-      >
-        <Box 
-          sx={{ 
-            p: 3, 
+          {/* Right side - user menu or login button */}
+          <Box sx={{ 
             display: 'flex', 
-            alignItems: 'center',
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            background: `linear-gradient(145deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            color: 'white',
-            borderRadius: '0 16px 0 0',
-          }}
-        >
-          <FitnessCenterRounded sx={{ mr: 1, fontSize: 24 }} />
-          <Typography variant="h6" fontWeight="bold">
-            BodyLevel
-          </Typography>
-        </Box>
-
-        {isAuthenticated && (
-          <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Avatar 
-                sx={{ 
-                  mr: 2, 
-                  width: 50, 
-                  height: 50,
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                }}
-              >
-                {user?.username?.[0] || <Person />}
-              </Avatar>
-              <Box>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {user?.username}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 160 }}>
-                  {user?.email}
-                </Typography>
-              </Box>
+            alignItems: 'center', 
+            gap: { xs: 1, sm: 2 },
+            ml: 'auto',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 2
+          }}>
+            {/* Theme Toggle Button */}
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <ThemeToggle />
             </Box>
-          </Box>
-        )}
 
-        <List sx={{ pt: 1, pb: 2, px: 1 }}>
-          <ListItemButton 
-            component={RouterLink} 
-            to="/" 
-            onClick={handleDrawerToggle}
-            sx={{
-              borderRadius: 2,
-              mb: 1,
-              backgroundColor: isActive('/') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-              },
-            }}
-          >
-            <ListItemIcon 
-              sx={{ 
-                minWidth: 40, 
-                color: isActive('/') ? theme.palette.primary.main : 'inherit' 
-              }}
-            >
-              <Home />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Home" 
-              primaryTypographyProps={{ 
-                fontWeight: isActive('/') ? 'bold' : 'regular'
-              }}
-            />
-            {isActive('/') && (
-              <Box 
-                sx={{ 
-                  width: 4, 
-                  height: 36, 
-                  bgcolor: theme.palette.primary.main,
-                  borderRadius: 2,
-                  ml: 1,
-                }}
-              />
-            )}
-          </ListItemButton>
-          
-          {isAuthenticated && (
-            <>
-              <ListItemButton 
-                component={RouterLink} 
-                to="/profile" 
-                onClick={handleDrawerToggle}
-                sx={{
-                  borderRadius: 2,
-                  mb: 1,
-                  backgroundColor: isActive('/profile') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
-                }}
-              >
-                <ListItemIcon 
-                  sx={{ 
-                    minWidth: 40, 
-                    color: isActive('/profile') ? theme.palette.primary.main : 'inherit' 
-                  }}
-                >
-                  <Person />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Profile" 
-                  primaryTypographyProps={{ 
-                    fontWeight: isActive('/profile') ? 'bold' : 'regular'
-                  }}
-                />
-                {isActive('/profile') && (
-                  <Box 
-                    sx={{ 
-                      width: 4, 
-                      height: 36, 
-                      bgcolor: theme.palette.primary.main,
-                      borderRadius: 2,
-                      ml: 1,
-                    }}
-                  />
-                )}
-              </ListItemButton>
-              
-              <ListItemButton 
-                component={RouterLink} 
-                to="/skills" 
-                onClick={handleDrawerToggle}
-                sx={{
-                  borderRadius: 2,
-                  mb: 1,
-                  backgroundColor: isActive('/skills') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  },
-                }}
-              >
-                <ListItemIcon 
-                  sx={{ 
-                    minWidth: 40, 
-                    color: isActive('/skills') ? theme.palette.primary.main : 'inherit' 
-                  }}
-                >
-                  <FitnessCenterRounded />
-                </ListItemIcon>
-                <ListItemText 
-                  primary="Skills" 
-                  primaryTypographyProps={{ 
-                    fontWeight: isActive('/skills') ? 'bold' : 'regular'
-                  }}
-                />
-                {isActive('/skills') && (
-                  <Box 
-                    sx={{ 
-                      width: 4, 
-                      height: 36, 
-                      bgcolor: theme.palette.primary.main,
-                      borderRadius: 2,
-                      ml: 1,
-                    }}
-                  />
-                )}
-              </ListItemButton>
-              
-              {isAdmin && (
-                <ListItemButton 
-                  component={RouterLink} 
-                  to="/admin" 
-                  onClick={handleDrawerToggle}
+            {isAuthenticated ? (
+              <Tooltip title="Open settings">
+                <IconButton
+                  onClick={handleOpenUserMenu}
                   sx={{
-                    borderRadius: 2,
-                    mb: 1,
-                    backgroundColor: isActive('/admin') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                    p: 0,
+                    border: `2px solid ${theme.palette.primary.main}`,
                     '&:hover': {
                       backgroundColor: alpha(theme.palette.primary.main, 0.1),
                     },
                   }}
                 >
-                  <ListItemIcon 
-                    sx={{ 
-                      minWidth: 40, 
-                      color: isActive('/admin') ? theme.palette.primary.main : 'inherit' 
-                    }}
+                  <Avatar
+                    alt={user?.username || 'User'}
+                    sx={{ width: 32, height: 32 }}
                   >
-                    <Dashboard />
-                  </ListItemIcon>
-                  <ListItemText 
-                    primary="Admin Dashboard" 
-                    primaryTypographyProps={{ 
-                      fontWeight: isActive('/admin') ? 'bold' : 'regular'
-                    }}
-                  />
-                  {isActive('/admin') && (
-                    <Box 
-                      sx={{ 
-                        width: 4, 
-                        height: 36, 
-                        bgcolor: theme.palette.primary.main,
-                        borderRadius: 2,
-                        ml: 1,
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              )}
-              
-              <Divider sx={{ my: 2 }} />
-              
-              <ListItemButton 
-                onClick={() => {
-                  handleLogout();
-                  handleDrawerToggle();
-                }}
+                    {user?.username?.[0] || <Person />}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <Button
+                component={RouterLink}
+                to="/dev-login"
+                variant="contained"
                 sx={{
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  py: 0.5,
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                  px: { xs: 1.5, sm: 2 },
+                }}
+              >
+                Login
+              </Button>
+            )}
+
+            {/* User menu */}
+            <Menu
+              sx={{ 
+                mt: '45px',
+                '& .MuiPaper-root': {
                   borderRadius: 2,
-                  color: theme.palette.error.main,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  overflow: 'visible',
+                  '&:before': {
+                    content: '""',
+                    display: 'block',
+                    position: 'absolute',
+                    top: 0,
+                    right: 14,
+                    width: 10,
+                    height: 10,
+                    bgcolor: 'background.paper',
+                    transform: 'translateY(-50%) rotate(45deg)',
+                    zIndex: 0,
+                  },
+                },
+              }}
+              id="menu-appbar"
+              anchorEl={anchorElUser}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorElUser)}
+              onClose={handleCloseUserMenu}
+              TransitionComponent={Fade}
+            >
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {user?.username}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" noWrap>
+                  {user?.email}
+                </Typography>
+              </Box>
+
+              <Divider />
+
+              <MenuItem 
+                component={RouterLink} 
+                to="/"
+                onClick={handleCloseUserMenu}
+                sx={{
+                  borderRadius: 1,
+                  mx: 1,
+                  my: 0.5,
+                  transition: 'all 0.2s',
                   '&:hover': {
-                    backgroundColor: alpha(theme.palette.error.main, 0.1),
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  },
+                  '&:hover .MuiListItemIcon-root': {
+                    color: theme.palette.primary.main,
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 40, color: theme.palette.error.main }}>
-                  <Logout />
+                <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
+                  <Home fontSize="small" />
                 </ListItemIcon>
-                <ListItemText primary="Logout" />
-                <KeyboardArrowRight color="action" />
-              </ListItemButton>
-            </>
-          )}
-          
-          {!isAuthenticated && (
-            <ListItemButton 
-              component={RouterLink} 
-              to="/dev-login" 
-              onClick={handleDrawerToggle}
-              sx={{
-                borderRadius: 2,
-                mb: 1,
-                backgroundColor: isActive('/dev-login') ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                },
-              }}
-            >
-              <ListItemIcon 
-                sx={{ 
-                  minWidth: 40, 
-                  color: isActive('/dev-login') ? theme.palette.primary.main : 'inherit' 
+                <ListItemText primary="Home" />
+              </MenuItem>
+              <MenuItem 
+                component={RouterLink} 
+                to="/profile"
+                onClick={handleCloseUserMenu}
+                sx={{
+                  borderRadius: 1,
+                  mx: 1,
+                  my: 0.5,
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  },
+                  '&:hover .MuiListItemIcon-root': {
+                    color: theme.palette.primary.main,
+                  },
                 }}
               >
-                <Person />
-              </ListItemIcon>
-              <ListItemText 
-                primary="Login" 
-                primaryTypographyProps={{ 
-                  fontWeight: isActive('/dev-login') ? 'bold' : 'regular'
-                }}
-              />
-              {isActive('/dev-login') && (
-                <Box 
+                <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
+                  <Person fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Profile" />
+              </MenuItem>
+              {isAdmin && (
+                <MenuItem 
+                  component={RouterLink} 
+                  to="/admin"
+                  onClick={handleCloseUserMenu}
                   sx={{ 
-                    width: 4, 
-                    height: 36, 
-                    bgcolor: theme.palette.primary.main,
-                    borderRadius: 2,
-                    ml: 1,
+                    borderRadius: 1,
+                    mx: 1,
+                    my: 0.5,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                    },
+                    '&:hover .MuiListItemIcon-root': {
+                      color: theme.palette.primary.main,
+                    },
                   }}
-                />
+                >
+                  <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
+                    <Dashboard fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary="Admin Dashboard" />
+                </MenuItem>
               )}
-            </ListItemButton>
-          )}
-        </List>
+
+              <Divider />
+
+              <MenuItem 
+                onClick={handleLogout}
+                sx={{ 
+                  borderRadius: 1,
+                  mx: 1,
+                  my: 0.5,
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.error.main, 0.1),
+                  },
+                  '&:hover .MuiListItemIcon-root': {
+                    color: theme.palette.error.main,
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40, transition: 'all 0.2s' }}>
+                  <Logout fontSize="small" />
+                </ListItemIcon>
+                <ListItemText primary="Logout" />
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </Container>
+
+      {/* Mobile drawer */}
+      <SwipeableDrawer
+        anchor="left"
+        open={mobileOpen}
+        onOpen={() => setMobileOpen(true)}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        PaperProps={{
+          sx: {
+            width: 280,
+            backgroundColor: theme.palette.background.paper,
+            backgroundImage: 'none',
+          },
+        }}
+      >
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* Logo */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <FitnessCenterRounded sx={{ mr: 1, color: theme.palette.primary.main }} />
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/"
+              sx={{
+                textDecoration: 'none',
+                fontWeight: 700,
+                color: theme.palette.primary.main,
+              }}
+              onClick={() => setMobileOpen(false)}
+            >
+              BODYLEVEL
+            </Typography>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Navigation Links */}
+          <List>
+            {isAuthenticated ? (
+              <>
+                <ListItemButton
+                  component={RouterLink}
+                  to="/"
+                  onClick={() => setMobileOpen(false)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 1,
+                    backgroundColor: location.pathname === '/' ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                  }}
+                >
+                  <ListItemIcon>
+                    <Home color={location.pathname === '/' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Home"
+                    primaryTypographyProps={{
+                      fontWeight: location.pathname === '/' ? 700 : 400,
+                      color: location.pathname === '/' ? 'primary' : 'inherit',
+                    }}
+                  />
+                  {location.pathname === '/' && <KeyboardArrowRight color="primary" />}
+                </ListItemButton>
+
+                <ListItemButton
+                  component={RouterLink}
+                  to="/skills"
+                  onClick={() => setMobileOpen(false)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 1,
+                    backgroundColor: location.pathname === '/skills' ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                  }}
+                >
+                  <ListItemIcon>
+                    <FitnessCenterRounded color={location.pathname === '/skills' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Skills"
+                    primaryTypographyProps={{
+                      fontWeight: location.pathname === '/skills' ? 700 : 400,
+                      color: location.pathname === '/skills' ? 'primary' : 'inherit',
+                    }}
+                  />
+                  {location.pathname === '/skills' && <KeyboardArrowRight color="primary" />}
+                </ListItemButton>
+
+                <ListItemButton
+                  component={RouterLink}
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 1,
+                    backgroundColor: location.pathname === '/profile' ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                  }}
+                >
+                  <ListItemIcon>
+                    <Person color={location.pathname === '/profile' ? 'primary' : 'inherit'} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Profile"
+                    primaryTypographyProps={{
+                      fontWeight: location.pathname === '/profile' ? 700 : 400,
+                      color: location.pathname === '/profile' ? 'primary' : 'inherit',
+                    }}
+                  />
+                  {location.pathname === '/profile' && <KeyboardArrowRight color="primary" />}
+                </ListItemButton>
+
+                {isAdmin && (
+                  <ListItemButton
+                    component={RouterLink}
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    sx={{
+                      borderRadius: 2,
+                      mb: 1,
+                      backgroundColor: location.pathname === '/admin' ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Dashboard color={location.pathname === '/admin' ? 'primary' : 'inherit'} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Admin Dashboard"
+                      primaryTypographyProps={{
+                        fontWeight: location.pathname === '/admin' ? 700 : 400,
+                        color: location.pathname === '/admin' ? 'primary' : 'inherit',
+                      }}
+                    />
+                    {location.pathname === '/admin' && <KeyboardArrowRight color="primary" />}
+                  </ListItemButton>
+                )}
+              </>
+            ) : (
+              <ListItemButton
+                component={RouterLink}
+                to="/dev-login"
+                onClick={() => setMobileOpen(false)}
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: theme.palette.primary.main,
+                  color: 'white',
+                  mb: 1,
+                  '&:hover': {
+                    bgcolor: theme.palette.primary.dark,
+                  },
+                }}
+              >
+                <ListItemText primary="Login" />
+              </ListItemButton>
+            )}
+          </List>
+
+          <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Theme Toggle in Mobile Menu */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              mb: 2,
+              p: 1,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+            }}>
+              <Typography variant="body2" sx={{ mr: 1 }}>
+                {theme.palette.mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              </Typography>
+              <ThemeToggle />
+            </Box>
+
+            {isAuthenticated && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<Logout />}
+                onClick={() => {
+                  dispatch(logout());
+                  setMobileOpen(false);
+                }}
+                fullWidth
+                sx={{ borderRadius: 2 }}
+              >
+                Logout
+              </Button>
+            )}
+          </Box>
+        </Box>
       </SwipeableDrawer>
     </AppBar>
   );

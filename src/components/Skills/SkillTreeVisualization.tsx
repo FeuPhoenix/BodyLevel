@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAppSelector } from '../../hooks';
+import { useAppSelector, useAppDispatch } from '../../hooks';
 import { Navigate } from 'react-router-dom';
 import {
   Box,
@@ -17,6 +17,8 @@ import {
   Grid,
   Divider,
   Slider,
+  Container,
+  Alert,
 } from '@mui/material';
 import {
   FitnessCenterRounded,
@@ -26,7 +28,9 @@ import {
   Close,
   ArrowForward,
   ArrowBack,
+  Refresh,
 } from '@mui/icons-material';
+import { syncAdminSkills } from '../../features/skills/skillsSlice';
 
 // Define the node size and spacing
 const NODE_SIZE = 100;
@@ -46,6 +50,7 @@ const CATEGORY_COLORS = {
 // };
 
 export const SkillTreeVisualization = () => {
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const skills = useAppSelector(state => state.skills.skills);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -62,6 +67,21 @@ export const SkillTreeVisualization = () => {
   const [nodePositions, setNodePositions] = useState<Record<string, { x: number; y: number }>>({});
   const [connections, setConnections] = useState<{ from: string; to: string; fromX: number; fromY: number; toX: number; toY: number }[]>([]);
   const [organizedSkills, setOrganizedSkills] = useState<Record<string, Record<number, any[]>>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Sync skills data on component mount
+  useEffect(() => {
+    console.log("SkillTreeVisualization - Syncing skills data");
+    setIsLoading(true);
+    
+    // Load fresh skills data
+    dispatch(syncAdminSkills());
+    
+    // Set loading to false after a short delay
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+  }, [dispatch]);
 
   // Update forceNavigateHome to use setRedirectToHome
   const handleForceNavigateHome = () => {
@@ -75,6 +95,10 @@ export const SkillTreeVisualization = () => {
 
   // Group skills by category and level
   useEffect(() => {
+    if (!skills || skills.length === 0) return;
+    
+    console.log("Organizing skills:", skills.length, "skills");
+    
     const organizeSkillsData = () => {
       // First group by category
       const byCategory: Record<string, any[]> = {};
@@ -106,6 +130,7 @@ export const SkillTreeVisualization = () => {
         });
       });
       
+      console.log("Organized skills:", organized);
       setOrganizedSkills(organized);
     };
 
@@ -244,533 +269,358 @@ export const SkillTreeVisualization = () => {
     setPan({ x: 0, y: 0 });
   };
 
-  // Render the skill tree
+  // Render the skill tree visualization
   return (
-    <Box sx={{ mt: 2, mb: 8, position: 'relative', height: 'calc(100vh - 150px)' }}>
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: { xs: 1, sm: 3 }, 
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: 2,
-          height: '100%',
-        }}
-      >
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          mb: 2, 
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1
-        }}>
-          <Typography variant="h5" fontWeight="bold">
+    <Box
+      sx={{
+        backgroundColor: theme.palette.background.default,
+        minHeight: 'calc(100vh - 64px)',
+        py: 4,
+        px: { xs: 2, md: 4 }
+      }}
+    >
+      <Container maxWidth="xl">
+        <Box mb={4} display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h4" component="h1" gutterBottom>
             Skill Tree
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          
+          <Box>
             <Button 
-              variant="contained" 
-              color="primary"
-              startIcon={<ArrowBack />}
-              onClick={handleForceNavigateHome}
-              sx={{ mr: 1 }}
+              startIcon={<Refresh />} 
+              onClick={() => {
+                setIsLoading(true);
+                dispatch(syncAdminSkills());
+                setTimeout(() => setIsLoading(false), 500);
+              }}
+              variant="outlined"
+              sx={{ mr: 2 }}
             >
-              Back to Home
+              Refresh Skills
             </Button>
-            <Button 
-              variant="outlined" 
-              size="small" 
+            <Button
+              variant="outlined"
               onClick={handleResetView}
             >
               Reset View
             </Button>
           </Box>
         </Box>
-
-        {/* Emergency message */}
-        <Box sx={{ 
-          mb: 2, 
-          p: 1, 
-          bgcolor: 'info.light', 
-          color: 'info.contrastText',
-          borderRadius: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <Typography variant="body2">
-            If you get stuck, click the home button or press ESC to return to home.
-          </Typography>
-        </Box>
-
-        {/* Category Legend */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: 1, 
-          mb: 2,
-          overflowX: 'auto',
-          pb: 1
-        }}>
-          {Object.keys(CATEGORY_COLORS).map(category => (
-            <Chip
-              key={category}
-              label={category}
-              sx={{
-                bgcolor: CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS],
-                color: 'white',
-                fontWeight: 'bold',
-              }}
-            />
-          ))}
-        </Box>
-
-        {/* Loading indicator if data is not ready */}
-        {(Object.keys(nodePositions).length === 0 || Object.keys(organizedSkills).length === 0) && (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '50%' 
-          }}>
-            <CircularProgress />
-            <Typography variant="h6" sx={{ ml: 2 }}>
-              Loading skill tree...
-            </Typography>
+        
+        {isLoading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="60vh">
+            <CircularProgress size={60} />
+            <Typography variant="h6" ml={2}>Loading skill tree...</Typography>
           </Box>
-        )}
-
-        {/* Skill Tree Container */}
-        {Object.keys(nodePositions).length > 0 && (
-          <Box 
-            ref={containerRef}
-            sx={{ 
-              position: 'relative', 
-              width: '100%', 
-              height: 'calc(100% - 120px)',
-              overflow: 'hidden',
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 1,
-              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.01)',
-              cursor: isDragging ? 'grabbing' : 'grab',
-            }}
-            onWheel={(e) => {
-              e.preventDefault();
-              const delta = e.deltaY > 0 ? -0.1 : 0.1;
-              setZoomLevel(prev => Math.max(0.5, Math.min(2, prev + delta)));
-            }}
-            onMouseDown={(e) => {
-              if (e.button === 0) { // Left mouse button
-                setIsDragging(true);
-                setDragStart({ x: e.clientX, y: e.clientY });
-              }
-            }}
-            onMouseMove={(e) => {
-              if (isDragging) {
-                const dx = e.clientX - dragStart.x;
-                const dy = e.clientY - dragStart.y;
-                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-                setDragStart({ x: e.clientX, y: e.clientY });
-              }
-            }}
-            onMouseUp={() => setIsDragging(false)}
-            onMouseLeave={() => setIsDragging(false)}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-              setDragStart({ 
-                x: e.touches[0].clientX, 
-                y: e.touches[0].clientY 
-              });
-            }}
-            onTouchMove={(e) => {
-              if (isDragging) {
-                const dx = e.touches[0].clientX - dragStart.x;
-                const dy = e.touches[0].clientY - dragStart.y;
-                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-                setDragStart({ 
-                  x: e.touches[0].clientX, 
-                  y: e.touches[0].clientY 
-                });
-              }
-            }}
-            onTouchEnd={() => setIsDragging(false)}
-          >
-            {/* SVG for skill tree */}
-            <svg
-              ref={svgRef}
-              width="100%"
-              height="100%"
-              viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
-              style={{
-                transform: `scale(${zoomLevel}) translate(${pan.x}px, ${pan.y}px)`,
-                transformOrigin: '0 0',
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+        ) : skills.length === 0 ? (
+          <Alert severity="info" sx={{ mb: 4 }}>
+            <Typography variant="h6">No skills found</Typography>
+            <Typography>There are no skills available in the skill tree. Try refreshing or contact an administrator.</Typography>
+          </Alert>
+        ) : Object.keys(organizedSkills).length === 0 ? (
+          <Alert severity="warning" sx={{ mb: 4 }}>
+            <Typography variant="h6">Could not organize skills</Typography>
+            <Typography>The skills could not be properly organized by category. Try refreshing the page.</Typography>
+          </Alert>
+        ) : (
+          <>
+            <Paper
+              ref={containerRef}
+              elevation={3}
+              sx={{
+                width: '100%',
+                height: '70vh',
+                overflow: 'hidden',
+                position: 'relative',
+                borderRadius: 2,
+                boxShadow: theme.shadows[5],
+                mb: 2
               }}
+              onMouseDown={(e) => {
+                if (e.button === 0) {
+                  setIsDragging(true);
+                  setDragStart({ x: e.clientX, y: e.clientY });
+                }
+              }}
+              onMouseMove={(e) => {
+                if (isDragging) {
+                  const dx = e.clientX - dragStart.x;
+                  const dy = e.clientY - dragStart.y;
+                  setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                  setDragStart({ x: e.clientX, y: e.clientY });
+                }
+              }}
+              onMouseUp={() => setIsDragging(false)}
+              onMouseLeave={() => setIsDragging(false)}
+              style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
             >
-              {/* Category Labels */}
-              {Object.keys(organizedSkills).map((category) => (
-                <g key={`category-${category}`}>
-                  <text
-                    x={categoryTitlePositions[category] || 0}
-                    y={80}
-                    textAnchor="middle"
-                    fill={theme.palette.text.primary}
-                    fontWeight="bold"
-                    fontSize="18"
-                  >
-                    {category}
-                  </text>
-                  <line
-                    x1={categoryTitlePositions[category] - 100 || 0}
-                    y1={90}
-                    x2={categoryTitlePositions[category] + 100 || 0}
-                    y2={90}
-                    stroke={CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS]}
-                    strokeWidth="3"
-                  />
-                </g>
-              ))}
-
-              {/* Level Labels */}
-              {(() => {
-                // Find the maximum level across all categories
-                const maxLevel = Math.max(
-                  ...Object.values(organizedSkills).flatMap(category => 
-                    Object.keys(category).map(Number)
-                  ), 0
-                );
+              <svg
+                ref={svgRef}
+                width={svgDimensions.width}
+                height={svgDimensions.height}
+                viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
+                style={{
+                  transform: `scale(${zoomLevel}) translate(${pan.x}px, ${pan.y}px)`,
+                  transformOrigin: '0 0',
+                  transition: 'transform 0.1s ease-out'
+                }}
+              >
+                {/* Category titles */}
+                {Object.entries(categoryTitlePositions).map(([category, x]) => (
+                  <g key={`category-${category}`} transform={`translate(${x}, 60)`}>
+                    <text
+                      x={0}
+                      y={0}
+                      fontSize="20"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fill={CATEGORY_COLORS[category as keyof typeof CATEGORY_COLORS]}
+                    >
+                      {category}
+                    </text>
+                  </g>
+                ))}
                 
-                // Create level labels
-                return Array.from({ length: maxLevel }, (_, i) => i + 1).map(level => (
-                  <text
-                    key={`level-${level}`}
-                    x={20}
-                    y={level * VERTICAL_SPACING + 150}
-                    textAnchor="start"
-                    fill={theme.palette.text.secondary}
-                    fontSize="14"
-                    fontWeight="bold"
-                  >
-                    Level {level}
-                  </text>
-                ));
-              })()}
-
-              {/* Connections between skills */}
-              {connections.map((connection, index) => {
-                // Calculate control points for curved lines
-                const dx = connection.toX - connection.fromX;
-                const dy = connection.toY - connection.fromY;
-                const controlX = connection.fromX + dx / 2;
-                const controlY = connection.fromY + dy / 2;
-                
-                return (
-                  <g key={`connection-${index}`}>
-                    <path
-                      d={`M ${connection.fromX} ${connection.fromY} Q ${controlX} ${controlY} ${connection.toX} ${connection.toY}`}
-                      fill="none"
+                {/* Connection lines */}
+                {connections.map((conn, i) => (
+                  <g key={`connection-${i}`}>
+                    <line
+                      x1={conn.fromX}
+                      y1={conn.fromY}
+                      x2={conn.toX}
+                      y2={conn.toY}
                       stroke={theme.palette.divider}
                       strokeWidth="2"
-                      strokeDasharray="none"
-                      markerEnd="url(#arrowhead)"
+                      strokeDasharray={conn.from.includes('locked') ? '5,5' : ''}
                     />
-                    <defs>
-                      <marker
-                        id="arrowhead"
-                        markerWidth="10"
-                        markerHeight="7"
-                        refX="9"
-                        refY="3.5"
-                        orient="auto"
-                      >
-                        <polygon
-                          points="0 0, 10 3.5, 0 7"
-                          fill={theme.palette.divider}
-                        />
-                      </marker>
-                    </defs>
+                    {/* Arrow */}
+                    <polygon
+                      points={`${conn.toX - 5},${conn.toY} ${conn.toX},${conn.toY - 5} ${conn.toX + 5},${conn.toY}`}
+                      fill={theme.palette.divider}
+                      transform={`rotate(90, ${conn.toX}, ${conn.toY})`}
+                    />
                   </g>
-                );
-              })}
-
-              {/* Skill nodes */}
-              {skills.map(skill => {
-                const position = nodePositions[skill.id];
-                if (!position) return null;
+                ))}
                 
-                const categoryColor = CATEGORY_COLORS[skill.category as keyof typeof CATEGORY_COLORS];
-                
-                return (
-                  <g
-                    key={`skill-${skill.id}`}
-                    transform={`translate(${position.x}, ${position.y})`}
-                    onClick={() => handleSkillClick(skill)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {/* Node background */}
-                    <rect
-                      x="0"
-                      y="0"
-                      width={NODE_SIZE}
-                      height={NODE_SIZE}
-                      rx="10"
-                      ry="10"
-                      fill={theme.palette.background.paper}
-                      stroke={categoryColor}
-                      strokeWidth="3"
-                      filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.2))"
-                    />
-                    
-                    {/* Status indicator */}
-                    {skill.status === 'completed' && (
-                      <circle
-                        cx={NODE_SIZE - 10}
-                        cy="10"
-                        r="8"
-                        fill="#4caf50"
-                      />
-                    )}
-                    {skill.status === 'in-progress' && (
-                      <circle
-                        cx={NODE_SIZE - 10}
-                        cy="10"
-                        r="8"
-                        fill="#ff9800"
-                      />
-                    )}
-                    {skill.status === 'locked' && (
-                      <circle
-                        cx={NODE_SIZE - 10}
-                        cy="10"
-                        r="8"
-                        fill="#f44336"
-                      />
-                    )}
-                    
-                    {/* Skill icon */}
-                    <svg
-                      x={(NODE_SIZE - 40) / 2}
-                      y={(NODE_SIZE - 40) / 2 - 15}
-                      width="40"
-                      height="40"
-                      viewBox="0 0 24 24"
+                {/* Skill nodes */}
+                {Object.entries(nodePositions).map(([skillId, position]) => {
+                  const skill = skills.find(s => s.id === skillId);
+                  if (!skill) return null;
+                  
+                  const statusIcon = () => {
+                    switch (skill.status) {
+                      case 'locked':
+                        return <LockOutlined style={{ fontSize: 24, color: 'white' }} />;
+                      case 'unlocked':
+                        return <FitnessCenterRounded style={{ fontSize: 24, color: 'white' }} />;
+                      case 'in-progress':
+                        return <PlayCircleOutlined style={{ fontSize: 24, color: 'white' }} />;
+                      case 'completed':
+                        return <CheckCircleOutlined style={{ fontSize: 24, color: 'white' }} />;
+                      default:
+                        return <FitnessCenterRounded style={{ fontSize: 24, color: 'white' }} />;
+                    }
+                  };
+                  
+                  const categoryColor = CATEGORY_COLORS[skill.category as keyof typeof CATEGORY_COLORS];
+                  
+                  return (
+                    <g
+                      key={`skill-${skillId}`}
+                      transform={`translate(${position.x - NODE_SIZE / 2}, ${position.y - NODE_SIZE / 2})`}
+                      onClick={() => handleSkillClick(skill)}
+                      style={{ cursor: 'pointer' }}
                     >
-                      {skill.status === 'locked' ? (
-                        <LockOutlined style={{ width: '100%', height: '100%', color: '#aaa' }} />
-                      ) : skill.status === 'completed' ? (
-                        <CheckCircleOutlined style={{ width: '100%', height: '100%', color: '#4caf50' }} />
-                      ) : (
-                        <FitnessCenterRounded style={{ width: '100%', height: '100%', color: categoryColor }} />
-                      )}
-                    </svg>
-                    
-                    {/* Background for text to ensure readability */}
-                    <rect
-                      x="5"
-                      y={NODE_SIZE - 35}
-                      width={NODE_SIZE - 10}
-                      height="30"
-                      rx="4"
-                      ry="4"
-                      fill={theme.palette.background.paper}
-                      opacity="0.8"
-                    />
-                    
-                    {/* Skill name */}
-                    <text
-                      x={NODE_SIZE / 2}
-                      y={NODE_SIZE - 20}
-                      textAnchor="middle"
-                      fill={theme.palette.text.primary}
-                      fontSize="11"
-                      fontWeight="bold"
-                      style={{
-                        whiteSpace: 'nowrap',
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        maxWidth: `${NODE_SIZE - 10}px`,
-                      }}
-                    >
-                      {skill.title.length > 12 ? `${skill.title.substring(0, 10)}...` : skill.title}
-                    </text>
-                    
-                    {/* Level indicator */}
-                    <text
-                      x={NODE_SIZE / 2}
-                      y={NODE_SIZE - 5}
-                      textAnchor="middle"
-                      fill={theme.palette.text.secondary}
-                      fontSize="10"
-                    >
-                      Level {skill.level}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </Box>
-        )}
-
-        {/* Zoom level indicator */}
-        <Box 
-          sx={{ 
-            position: 'absolute', 
-            bottom: 20, 
-            left: 20,
-            bgcolor: 'background.paper',
-            p: 1,
-            borderRadius: 1,
-            boxShadow: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            flexWrap: 'wrap',
-            maxWidth: { xs: '120px', sm: 'auto' }
-          }}
-        >
-          <Typography variant="body2" fontWeight="bold">
-            Zoom: {Math.round(zoomLevel * 100)}%
-          </Typography>
-          <Slider
-            value={zoomLevel * 100}
-            min={50}
-            max={200}
-            step={10}
-            onChange={(_, value) => setZoomLevel(Number(value) / 100)}
-            sx={{ width: { xs: '100%', sm: 100 }, ml: { xs: 0, sm: 1 } }}
-            size="small"
-          />
-        </Box>
-      </Paper>
-
-      {/* Skill detail dialog */}
-      <Dialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        maxWidth="sm"
-        fullWidth
-      >
-        {selectedSkill && (
-          <>
-            <DialogTitle sx={{ pb: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6" fontWeight="bold">
+                      {/* Skill node background */}
+                      <rect
+                        width={NODE_SIZE}
+                        height={NODE_SIZE}
+                        rx={10}
+                        ry={10}
+                        fill={skill.status === 'locked' ? '#757575' : categoryColor}
+                        opacity={skill.status === 'locked' ? 0.7 : 1}
+                        stroke={skill.status === 'completed' ? theme.palette.success.main : 'none'}
+                        strokeWidth={skill.status === 'completed' ? 3 : 0}
+                      />
+                      
+                      {/* Skill icon */}
+                      <foreignObject width={NODE_SIZE} height={NODE_SIZE / 2} y={10}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            width: '100%',
+                            height: '100%'
+                          }}
+                        >
+                          {statusIcon()}
+                        </Box>
+                      </foreignObject>
+                      
+                      {/* Skill title */}
+                      <foreignObject width={NODE_SIZE} height={NODE_SIZE / 2} y={NODE_SIZE / 2}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            width: '100%',
+                            height: '100%',
+                            px: 1
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            align="center"
+                            sx={{
+                              color: 'white',
+                              fontWeight: 'bold',
+                              wordBreak: 'break-word',
+                              textShadow: '0px 1px 2px rgba(0,0,0,0.5)'
+                            }}
+                          >
+                            {skill.title}
+                          </Typography>
+                        </Box>
+                      </foreignObject>
+                    </g>
+                  );
+                })}
+              </svg>
+            </Paper>
+            
+            {/* Zoom controls */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="body2" sx={{ mr: 2 }}>Zoom:</Typography>
+              <Slider
+                value={zoomLevel}
+                min={0.5}
+                max={2}
+                step={0.1}
+                onChange={(_, value) => setZoomLevel(value as number)}
+                sx={{ width: 200 }}
+                valueLabelDisplay="auto"
+                valueLabelFormat={value => `${Math.round(value * 100)}%`}
+              />
+            </Box>
+            
+            {/* Skill details dialog */}
+            {selectedSkill && (
+              <Dialog
+                open={dialogOpen}
+                onClose={handleCloseDialog}
+                maxWidth="sm"
+                fullWidth
+              >
+                <DialogTitle sx={{ 
+                  backgroundColor: CATEGORY_COLORS[selectedSkill.category as keyof typeof CATEGORY_COLORS],
+                  color: 'white',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
                   {selectedSkill.title}
-                </Typography>
-                <IconButton onClick={handleCloseDialog} size="small">
-                  <Close />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent dividers>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      label={selectedSkill.category}
-                      sx={{
-                        bgcolor: CATEGORY_COLORS[selectedSkill.category as keyof typeof CATEGORY_COLORS],
-                        color: 'white',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                    <Chip
-                      label={`Level ${selectedSkill.level}`}
-                      variant="outlined"
-                      size="small"
-                    />
-                    <Chip
-                      label={selectedSkill.status}
-                      color={
-                        selectedSkill.status === 'completed'
-                          ? 'success'
-                          : selectedSkill.status === 'in-progress'
-                          ? 'warning'
-                          : 'error'
-                      }
-                      size="small"
-                    />
-                  </Box>
-                </Grid>
+                  <IconButton
+                    edge="end"
+                    color="inherit"
+                    onClick={handleCloseDialog}
+                    aria-label="close"
+                  >
+                    <Close />
+                  </IconButton>
+                </DialogTitle>
                 
-                <Grid item xs={12}>
-                  <Typography variant="body1" paragraph>
-                    {selectedSkill.description}
-                  </Typography>
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Requirements
-                  </Typography>
-                  <Typography variant="body2">
-                    {selectedSkill.requirements_sets} sets of {selectedSkill.requirements_reps} reps
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    {selectedSkill.requirements_description}
-                  </Typography>
-                </Grid>
-                
-                {selectedSkill.prerequisites?.length > 0 && (
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 1 }} />
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                      Prerequisites
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {selectedSkill.prerequisites.map((prereqId: string) => {
-                        const prereq = skills.find(s => s.id === prereqId);
-                        return prereq ? (
-                          <Chip
-                            key={prereq.id}
-                            label={prereq.title}
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                          />
-                        ) : null;
-                      })}
-                    </Box>
+                <DialogContent sx={{ py: 3 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <Chip
+                        label={selectedSkill.category}
+                        sx={{
+                          backgroundColor: CATEGORY_COLORS[selectedSkill.category as keyof typeof CATEGORY_COLORS],
+                          color: 'white',
+                          mr: 1,
+                          mb: 1
+                        }}
+                      />
+                      <Chip
+                        label={`Level ${selectedSkill.level}`}
+                        color="secondary"
+                        sx={{ mr: 1, mb: 1 }}
+                      />
+                      <Chip
+                        label={selectedSkill.status.replace('-', ' ')}
+                        color={
+                          selectedSkill.status === 'completed'
+                            ? 'success'
+                            : selectedSkill.status === 'in-progress'
+                            ? 'warning'
+                            : selectedSkill.status === 'unlocked'
+                            ? 'info'
+                            : 'default'
+                        }
+                        sx={{ textTransform: 'capitalize' }}
+                      />
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <Typography variant="body1">{selectedSkill.description}</Typography>
+                    </Grid>
+                    
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="subtitle1" fontWeight="bold">Requirements:</Typography>
+                      <Typography variant="body2">
+                        {selectedSkill.requirements.description}
+                      </Typography>
+                    </Grid>
+                    
+                    {selectedSkill.formTips && (
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 1 }}>Form Tips:</Typography>
+                        <ul style={{ marginTop: 0, paddingLeft: 20 }}>
+                          {selectedSkill.formTips.map((tip: string, i: number) => (
+                            <li key={i}>
+                              <Typography variant="body2">{tip}</Typography>
+                            </li>
+                          ))}
+                        </ul>
+                      </Grid>
+                    )}
+                    
+                    {selectedSkill.prerequisites.length > 0 && (
+                      <Grid item xs={12}>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 1 }}>Prerequisites:</Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                          {selectedSkill.prerequisites.map((preId: string) => {
+                            const preSkill = skills.find(s => s.id === preId);
+                            return preSkill ? (
+                              <Chip
+                                key={preId}
+                                label={preSkill.title}
+                                size="small"
+                                sx={{
+                                  backgroundColor: CATEGORY_COLORS[preSkill.category as keyof typeof CATEGORY_COLORS],
+                                  color: 'white',
+                                  opacity: 0.8
+                                }}
+                              />
+                            ) : null;
+                          })}
+                        </Box>
+                      </Grid>
+                    )}
                   </Grid>
-                )}
+                </DialogContent>
                 
-                {selectedSkill.video_url && (
-                  <Grid item xs={12}>
-                    <Divider sx={{ my: 1 }} />
-                    <Button
-                      variant="outlined"
-                      startIcon={<PlayCircleOutlined />}
-                      fullWidth
-                    >
-                      Watch Tutorial Video
-                    </Button>
-                  </Grid>
-                )}
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Close</Button>
-              {selectedSkill.status !== 'completed' && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  endIcon={<ArrowForward />}
-                  disabled={selectedSkill.status === 'locked'}
-                >
-                  {selectedSkill.status === 'locked'
-                    ? 'Locked'
-                    : selectedSkill.status === 'in-progress'
-                    ? 'Continue Training'
-                    : 'Start Training'}
-                </Button>
-              )}
-            </DialogActions>
+                <DialogActions>
+                  <Button onClick={handleCloseDialog}>Close</Button>
+                </DialogActions>
+              </Dialog>
+            )}
           </>
         )}
-      </Dialog>
+      </Container>
     </Box>
   );
 }; 

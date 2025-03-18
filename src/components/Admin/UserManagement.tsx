@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -26,6 +26,7 @@ import {
   Alert,
   AlertProps,
   DialogContentText,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Edit,
@@ -35,10 +36,14 @@ import {
   AdminPanelSettings,
 } from '@mui/icons-material';
 import { User } from '../../types';
-import { useAppDispatch } from '../../hooks';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import { setAuthenticated } from '../../features/auth/authSlice';
 
-interface AdminUser extends User {
+interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  role: 'user' | 'admin';
   status: 'active' | 'inactive' | 'suspended';
   lastLogin?: string;
 }
@@ -53,10 +58,16 @@ export const UserManagement = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [selectedUser, setSelectedUser] = useState<Partial<AdminUser> | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<AdminUser> & { password?: string }>({});
+  const [formData, setFormData] = useState<Partial<AdminUser> & { password?: string }>({
+    username: '',
+    email: '',
+    role: 'user',
+    status: 'active',
+    password: '',
+  });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -185,20 +196,26 @@ export const UserManagement = () => {
     setFormErrors({});
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name as string]: value,
-    });
-    
-    // Clear the specific error when user types
-    if (formErrors[name as keyof FormErrors]) {
-      setFormErrors({
-        ...formErrors,
-        [name as string]: undefined,
-      });
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRoleChange = (e: SelectChangeEvent<'user' | 'admin'>) => {
+    setFormData(prev => ({
+      ...prev,
+      role: e.target.value as 'user' | 'admin'
+    }));
+  };
+
+  const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive' | 'suspended'>) => {
+    setFormData(prev => ({
+      ...prev,
+      status: e.target.value as 'active' | 'inactive' | 'suspended'
+    }));
   };
 
   const handleSaveUser = () => {
@@ -491,7 +508,7 @@ export const UserManagement = () => {
                 label="Role"
                 name="role"
                 value={formData.role || 'user'}
-                onChange={handleInputChange}
+                onChange={handleRoleChange}
               >
                 <MenuItem value="user">User</MenuItem>
                 <MenuItem value="admin">Admin</MenuItem>
@@ -503,7 +520,7 @@ export const UserManagement = () => {
                 label="Status"
                 name="status"
                 value={formData.status || 'active'}
-                onChange={handleInputChange}
+                onChange={handleStatusChange}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
