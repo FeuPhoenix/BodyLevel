@@ -57,10 +57,62 @@ const initializeSkills = (skills: Skill[], progress: Record<string, SkillProgres
   return initializedSkills;
 };
 
+// Check for custom skills in localStorage
+const loadCustomSkills = (): Skill[] => {
+  try {
+    const mockSkills = localStorage.getItem('mockSkills');
+    if (!mockSkills) return initialSkills;
+    
+    const parsedMockSkills = JSON.parse(mockSkills);
+    
+    // If no mock skills, return initial skills
+    if (!parsedMockSkills || parsedMockSkills.length === 0) return initialSkills;
+    
+    // Convert admin format skills to application format
+    const convertedSkills = parsedMockSkills.map((mockSkill: any) => {
+      // Parse requirements from string format (e.g. "3 sets of 10 reps")
+      let requirements = { sets: 3, reps: 10, description: mockSkill.requirements };
+      
+      try {
+        const reqMatch = mockSkill.requirements.match(/(\d+)\s*sets\s*of\s*(\d+)\s*reps/i);
+        if (reqMatch && reqMatch.length >= 3) {
+          requirements = {
+            sets: parseInt(reqMatch[1], 10),
+            reps: parseInt(reqMatch[2], 10),
+            description: mockSkill.requirements
+          };
+        }
+      } catch (e) {
+        console.error("Failed to parse requirements:", e);
+      }
+      
+      // Create a proper skill object
+      return {
+        id: mockSkill.id,
+        title: mockSkill.title,
+        description: mockSkill.description || `${mockSkill.title} exercise`,
+        category: mockSkill.category,
+        level: mockSkill.level,
+        requirements,
+        prerequisites: mockSkill.prerequisites || [],
+        status: (mockSkill.status === 'active' ? 'unlocked' : 'locked') as SkillStatus,
+        position: { x: 0, y: 0 } // Default position
+      } as Skill;
+    });
+    
+    console.log('Loaded custom skills from localStorage:', convertedSkills.length);
+    return convertedSkills;
+  } catch (error) {
+    console.error('Error loading custom skills:', error);
+    return initialSkills;
+  }
+};
+
+const skillsToUse = loadCustomSkills();
 const savedProgress = loadProgressFromStorage();
 
 const initialState = {
-  skills: initializeSkills(initialSkills, savedProgress),
+  skills: initializeSkills(skillsToUse, savedProgress),
   progress: savedProgress,
   loading: false,
   error: null as string | null,
@@ -118,17 +170,66 @@ const skillsSlice = createSlice({
     
     resetProgress: (state) => {
       state.progress = {};
-      state.skills = initializeSkills(initialSkills, {});
+      state.skills = initializeSkills(state.skills, {});
       localStorage.removeItem('bodyLevelProgress');
     },
     
     importProgress: (state, action: PayloadAction<Record<string, SkillProgress>>) => {
       state.progress = action.payload;
-      state.skills = initializeSkills(initialSkills, action.payload);
+      state.skills = initializeSkills(state.skills, action.payload);
       localStorage.setItem('bodyLevelProgress', JSON.stringify(action.payload));
+    },
+    
+    // New action to update skills from admin panel
+    syncAdminSkills: (state) => {
+      // Load skills from the admin panel (localStorage)
+      const updatedSkills = loadCustomSkills();
+      
+      // Keep existing progress but apply it to the new skills
+      state.skills = initializeSkills(updatedSkills, state.progress);
+    },
+    
+    // New action to update a single skill from admin panel
+    updateSkill: (state, action: PayloadAction<Skill>) => {
+      const updatedSkill = action.payload;
+      const index = state.skills.findIndex(s => s.id === updatedSkill.id);
+      
+      if (index !== -1) {
+        // Update the skill
+        state.skills[index] = {
+          ...updatedSkill,
+          status: state.skills[index].status, // Keep the existing status
+        };
+      } else {
+        // Add new skill
+        state.skills.push({
+          ...updatedSkill,
+          status: updatedSkill.prerequisites.length === 0 ? 'unlocked' : 'locked'
+        });
+      }
+    },
+    
+    // New action to delete a skill
+    deleteSkill: (state, action: PayloadAction<string>) => {
+      const skillId = action.payload;
+      state.skills = state.skills.filter(s => s.id !== skillId);
+      
+      // Remove any progress for this skill
+      if (state.progress[skillId]) {
+        delete state.progress[skillId];
+        localStorage.setItem('bodyLevelProgress', JSON.stringify(state.progress));
+      }
     }
   }
 });
 
-export const { updateSkillProgress, resetProgress, importProgress } = skillsSlice.actions;
+export const { 
+  updateSkillProgress, 
+  resetProgress, 
+  importProgress, 
+  syncAdminSkills,
+  updateSkill,
+  deleteSkill
+} = skillsSlice.actions;
+
 export default skillsSlice.reducer; 

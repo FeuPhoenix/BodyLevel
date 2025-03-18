@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -9,40 +9,93 @@ import {
   Link,
   Alert,
   Snackbar,
+  CircularProgress,
 } from '@mui/material';
-import { useAppDispatch } from '../../hooks';
-import { login, register } from '../../features/auth/authSlice';
+import { useAppDispatch, useAppSelector } from '../../hooks';
+import { login, register, clearError } from '../../features/auth/authSlice';
 
 export const DevLogin = () => {
   const dispatch = useAppDispatch();
+  const { error, isLoading } = useAppSelector(state => state.auth);
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [validationError, setValidationError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Clear validation errors when switching between login/register
+  useEffect(() => {
+    setValidationError('');
+    dispatch(clearError());
+  }, [isLogin, dispatch]);
+
+  // Form validation
+  const validateForm = () => {
+    // Reset errors
+    setValidationError('');
+    
+    // Email validation
+    if (!email) {
+      setValidationError('Email is required');
+      return false;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setValidationError('Please enter a valid email address');
+      return false;
+    }
+    
+    // Password validation
+    if (!password) {
+      setValidationError('Password is required');
+      return false;
+    }
+    
+    if (!isLogin) {
+      // Username validation for registration
+      if (!username) {
+        setValidationError('Username is required');
+        return false;
+      }
+      
+      if (username.length < 3) {
+        setValidationError('Username must be at least 3 characters');
+        return false;
+      }
+      
+      // Password length check
+      if (password.length < 6) {
+        setValidationError('Password must be at least 6 characters');
+        return false;
+      }
+      
+      // Password confirmation
+      if (password !== confirmPassword) {
+        setValidationError('Passwords do not match');
+        return false;
+      }
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
+    
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
     try {
       if (isLogin) {
         // Login
         await dispatch(login({ email, password })).unwrap();
       } else {
-        // Registration validation
-        if (password !== confirmPassword) {
-          setError('Passwords do not match');
-          return;
-        }
-
-        if (password.length < 6) {
-          setError('Password must be at least 6 characters');
-          return;
-        }
-
         // Register
         await dispatch(register({ email, username, password })).unwrap();
         setShowSuccess(true);
@@ -50,13 +103,23 @@ export const DevLogin = () => {
         setIsLogin(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      // Display the error message from the API or a generic error
+      const errorMessage = err instanceof Error ? err.message : 
+                          typeof err === 'string' ? err : 
+                          'Authentication failed. Please try again.';
+      
+      // Display error on screen 
+      setValidationError(errorMessage);
     }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setError('');
+    // Clear form when switching modes
+    if (!isLogin) {
+      setUsername('');
+      setConfirmPassword('');
+    }
   };
 
   return (
@@ -87,7 +150,15 @@ export const DevLogin = () => {
             : 'Create a new account to start tracking your fitness progress.'}
         </Typography>
 
-        {error && (
+        {/* Display validation errors with priority */}
+        {validationError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {validationError}
+          </Alert>
+        )}
+        
+        {/* Display Redux auth errors */}
+        {!validationError && error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
@@ -101,7 +172,10 @@ export const DevLogin = () => {
               margin="normal"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              error={!isLogin && !username && validationError === 'Username is required'}
+              helperText={!isLogin && !username && validationError === 'Username is required' ? 'Username is required' : ''}
               required
+              disabled={isLoading}
             />
           )}
           <TextField
@@ -111,7 +185,10 @@ export const DevLogin = () => {
             margin="normal"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!email && validationError === 'Email is required'}
+            helperText={!email && validationError === 'Email is required' ? 'Email is required' : ''}
             required
+            disabled={isLoading}
           />
           <TextField
             label="Password"
@@ -120,7 +197,10 @@ export const DevLogin = () => {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!password && validationError === 'Password is required'}
+            helperText={!password && validationError === 'Password is required' ? 'Password is required' : ''}
             required
+            disabled={isLoading}
           />
           {!isLogin && (
             <TextField
@@ -130,7 +210,10 @@ export const DevLogin = () => {
               margin="normal"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              error={password !== confirmPassword && validationError === 'Passwords do not match'}
+              helperText={password !== confirmPassword && validationError === 'Passwords do not match' ? 'Passwords do not match' : ''}
               required
+              disabled={isLoading}
             />
           )}
           <Button
@@ -140,8 +223,13 @@ export const DevLogin = () => {
             fullWidth
             size="large"
             sx={{ mt: 3 }}
+            disabled={isLoading}
           >
-            {isLogin ? 'Login' : 'Register'}
+            {isLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              isLogin ? 'Login' : 'Register'
+            )}
           </Button>
         </form>
 
@@ -156,6 +244,7 @@ export const DevLogin = () => {
             variant="body2"
             onClick={toggleMode}
             sx={{ mt: 1, cursor: 'pointer' }}
+            disabled={isLoading}
           >
             {isLogin ? 'Create Account' : 'Login'}
           </Link>

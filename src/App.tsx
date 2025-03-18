@@ -49,9 +49,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   console.log('AdminRoute - User:', user);
   console.log('AdminRoute - isAuthenticated:', isAuthenticated);
   
-  // Temporarily allow all authenticated users to access admin dashboard
-  // In production, you would use: const isAdmin = user?.role === 'admin';
-  // const isAdmin = true; // For testing purposes
+  // Check if user has admin role
+  const isAdmin = user?.role === 'admin';
   
   if (isLoading) {
     return (
@@ -75,7 +74,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/" replace />;
   }
   
-  // Always render children for testing
+  if (!isAdmin) {
+    console.log("User is not an admin, redirecting to home");
+    return <Navigate to="/" replace />;
+  }
+  
+  // Render children only if user is an admin
   return <>{children}</>;
 };
 
@@ -204,7 +208,6 @@ const AppContent = () => {
           } 
         />
         <Route path="/dev-login" element={<DevLogin />} />
-        <Route path="/user-profile" element={<UserProfile />} />
       </Routes>
     </Layout>
   );
