@@ -5,18 +5,58 @@ import {
   Paper,
   TextField,
   Button,
+  Divider,
+  Link,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import { useAppDispatch } from '../../hooks';
-import { login } from '../../features/auth/authSlice';
+import { login, register } from '../../features/auth/authSlice';
 
 export const DevLogin = () => {
   const dispatch = useAppDispatch();
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(login({ email, password }));
+    setError('');
+
+    try {
+      if (isLogin) {
+        // Login
+        await dispatch(login({ email, password })).unwrap();
+      } else {
+        // Registration validation
+        if (password !== confirmPassword) {
+          setError('Passwords do not match');
+          return;
+        }
+
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
+
+        // Register
+        await dispatch(register({ email, username, password })).unwrap();
+        setShowSuccess(true);
+        // Switch to login mode after successful registration
+        setIsLogin(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    }
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
   };
 
   return (
@@ -39,13 +79,31 @@ export const DevLogin = () => {
         }}
       >
         <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Developer Login
+          {isLogin ? 'Developer Login' : 'Create Account'}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Use this form to log in as a developer for testing purposes.
+          {isLogin 
+            ? 'Use this form to log in as a developer for testing purposes.' 
+            : 'Create a new account to start tracking your fitness progress.'}
         </Typography>
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit}>
+          {!isLogin && (
+            <TextField
+              label="Username"
+              fullWidth
+              margin="normal"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          )}
           <TextField
             label="Email"
             type="email"
@@ -53,6 +111,7 @@ export const DevLogin = () => {
             margin="normal"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <TextField
             label="Password"
@@ -61,7 +120,19 @@ export const DevLogin = () => {
             margin="normal"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
+          {!isLogin && (
+            <TextField
+              label="Confirm Password"
+              type="password"
+              fullWidth
+              margin="normal"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          )}
           <Button
             type="submit"
             variant="contained"
@@ -70,9 +141,32 @@ export const DevLogin = () => {
             size="large"
             sx={{ mt: 3 }}
           >
-            Login
+            {isLogin ? 'Login' : 'Register'}
           </Button>
         </form>
+
+        <Divider sx={{ my: 3 }} />
+        
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}
+          </Typography>
+          <Link
+            component="button"
+            variant="body2"
+            onClick={toggleMode}
+            sx={{ mt: 1, cursor: 'pointer' }}
+          >
+            {isLogin ? 'Create Account' : 'Login'}
+          </Link>
+        </Box>
+
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={6000}
+          onClose={() => setShowSuccess(false)}
+          message="Registration successful! You can now log in."
+        />
       </Paper>
     </Box>
   );

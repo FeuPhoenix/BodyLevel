@@ -69,6 +69,51 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
+      // For development: Check if running in development environment
+      if (import.meta.env.DEV) {
+        console.log('Using mock authentication in development mode');
+        
+        // Check if user exists in localStorage
+        const users = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+        const user = users.find((u: any) => u.email === email);
+        
+        if (!user) {
+          console.log('User not found in mockUsers:', email);
+          console.log('Available mock users:', users);
+          return rejectWithValue('User not found. Please register first.');
+        }
+        
+        if (user.password !== password) {
+          console.log('Invalid credentials for user:', email);
+          return rejectWithValue('Invalid credentials');
+        }
+        
+        // Create a mock response
+        const { password: _, ...userData } = user;
+        
+        const result = {
+          user: userData,
+          profile: {
+            user_id: userData.id,
+            display_name: userData.username,
+            theme_preference: 'light'
+          }
+        };
+        
+        console.log('Mock login successful, returning user data:', result);
+        
+        // Save to localStorage immediately to ensure it's available
+        const updatedState = {
+          user: result.user,
+          profile: result.profile,
+          isAuthenticated: true
+        };
+        localStorage.setItem('authState', JSON.stringify(updatedState));
+        
+        return result;
+      }
+      
+      // Production: Use actual API
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -109,6 +154,46 @@ export const register = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      // For development: Check if running in development environment
+      if (import.meta.env.DEV) {
+        console.log('Using mock registration in development mode');
+        
+        // Check if user already exists
+        const users = JSON.parse(localStorage.getItem('mockUsers') || '[]');
+        
+        if (users.some((u: any) => u.email === email)) {
+          return rejectWithValue('Email already in use');
+        }
+        
+        // Create a new user
+        const newUser = {
+          id: `user_${Date.now()}`,
+          email,
+          username,
+          password, // In a real app, we would hash this
+          role: users.length === 0 ? 'admin' : 'user' // First user is admin
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('mockUsers', JSON.stringify([...users, newUser]));
+        
+        // Don't return the password in the response
+        const { password: _, ...userData } = newUser;
+        
+        const result = {
+          user: userData,
+          profile: {
+            user_id: userData.id,
+            display_name: display_name || username,
+            theme_preference: 'light'
+          }
+        };
+        
+        console.log('Mock registration successful, returning:', result);
+        return result;
+      }
+      
+      // Production: Use actual API
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -139,6 +224,13 @@ export const register = createAsyncThunk(
 
 export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
   try {
+    // For development: Check if running in development environment
+    if (import.meta.env.DEV) {
+      console.log('Using mock logout in development mode');
+      return { success: true };
+    }
+    
+    // Production: Use actual API
     const response = await fetch('/api/auth/logout', {
       method: 'POST',
       credentials: 'include',
@@ -171,6 +263,30 @@ export const getCurrentUser = createAsyncThunk('auth/getCurrentUser', async (_, 
     // If we're already authenticated, don't check again
     if (state.auth.isAuthenticated && state.auth.user) {
       return { user: state.auth.user, profile: state.auth.profile };
+    }
+    
+    // For development: Check if running in development environment
+    if (import.meta.env.DEV) {
+      console.log('Using mock getCurrentUser in development mode');
+      
+      // Get authentication state from localStorage
+      const authState = loadAuthState();
+      console.log('Current auth state from localStorage:', authState);
+      
+      if (authState.user && authState.isAuthenticated) {
+        console.log('User is authenticated:', authState.user);
+        return { 
+          user: authState.user, 
+          profile: authState.profile || {
+            user_id: authState.user.id,
+            display_name: authState.user.username,
+            theme_preference: 'light'
+          } 
+        };
+      }
+      
+      console.log('User is not authenticated');
+      return null;
     }
     
     // Use a custom fetch that doesn't log 401 errors to console
@@ -255,11 +371,15 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.profile = action.payload.profile;
         state.error = null;
+        
+        // Ensure auth state is saved properly
+        console.log('Login successful, saving auth state:', action.payload);
         saveAuthState(state);
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+        console.log('Login rejected:', action.payload);
       });
 
     // Register
@@ -268,14 +388,24 @@ const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state) => {
+      .addCase(register.fulfilled, (state, action) => {
         state.isLoading = false;
-        // After registration, user still needs to login
+        
+        // In development mode, automatically log in after registration
+        if (import.meta.env.DEV && action.payload) {
+          console.log('Registration successful in dev mode, auto-logging in:', action.payload);
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.profile = action.payload.profile;
+          saveAuthState(state);
+        }
+        
         state.error = null;
       })
       .addCase(register.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+        console.log('Registration rejected:', action.payload);
       });
 
     // Logout
