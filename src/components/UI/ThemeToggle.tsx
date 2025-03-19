@@ -1,4 +1,4 @@
-import { IconButton, useTheme as useMuiTheme } from '@mui/material';
+import { IconButton } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
 
 interface ThemeToggleProps {

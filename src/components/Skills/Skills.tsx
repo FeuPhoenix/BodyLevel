@@ -1,5 +1,4 @@
-import React from 'react';
-import { Box, Typography, Container, Paper, useTheme, Button } from '@mui/material';
+import { Box, Typography, Container, Paper, useTheme } from '@mui/material';
 import { FitnessCenterRounded } from '@mui/icons-material';
 import { useAppSelector } from '../../hooks';
 

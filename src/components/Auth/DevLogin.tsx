@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -17,6 +16,8 @@ import { setAuthenticated } from '../../features/auth/authSlice';
 
 // Define user role type
 type UserRole = 'user' | 'admin';
+// Define theme preference type
+type ThemePreference = 'light' | 'dark';
 
 // Mock users for development
 const DEFAULT_MOCK_USERS = [
@@ -56,9 +57,10 @@ export const DevLogin = () => {
           status: mockUser.status,
         },
         profile: {
-          name: mockUser.role === 'admin' ? 'Admin User' : 'John Doe',
+          user_id: mockUser.id,
+          display_name: mockUser.role === 'admin' ? 'Admin User' : 'John Doe',
           bio: 'This is a mock user for development testing.',
-          avatar: null,
+          theme_preference: 'light' as ThemePreference,
         },
       };
       

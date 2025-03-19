@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   TextField,
   MenuItem,
@@ -23,13 +24,15 @@ import {
   Chip,
   Alert,
   Snackbar,
-  Grid,
+  useTheme,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
+  Add,
+  Edit,
   Delete as DeleteIcon,
+  Sync,
+  FitnessCenterRounded,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { Skill, SkillCategory } from '../../types';
@@ -37,7 +40,7 @@ import { initialSkills } from '../../features/skills/initialSkills';
 import { syncAdminSkills, updateSkill, deleteSkill } from '../../features/skills/skillsSlice';
 
 // Define skill types
-type SkillStatus = 'active' | 'archived' | 'draft';
+type SkillStatus = 'active' | 'inactive' | 'draft';
 
 interface AdminSkill {
   id: string;
@@ -66,6 +69,7 @@ export const SkillManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<AdminSkill>>({});
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const theme = useTheme();
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
@@ -90,12 +94,12 @@ export const SkillManagement = () => {
         setSkills(JSON.parse(storedSkills));
       } else {
         // Initialize with skills from initialSkills if none exist in localStorage
-        const adminSkills: AdminSkill[] = initialSkills.map(skill => ({
+        const adminSkills = initialSkills.map(skill => ({
           id: skill.id,
           title: skill.title,
           category: skill.category,
           level: skill.level,
-          status: 'active',
+          status: 'active' as SkillStatus,
           requirements: `${skill.requirements.sets} sets of ${skill.requirements.reps} reps`,
           description: skill.description,
           prerequisites: skill.prerequisites,
@@ -245,11 +249,11 @@ export const SkillManagement = () => {
           if (skill.id === selectedSkill.id) {
             updatedSkill = {
               ...skill,
-              title: formData.title,
-              category: formData.category,
-              level: Number(formData.level),
-              status: formData.status,
-              requirements: formData.requirements,
+              title: formData.title || '',
+              category: formData.category || 'Push',
+              level: Number(formData.level || 1),
+              status: formData.status || 'active',
+              requirements: formData.requirements || '',
               description: formData.description,
               prerequisites: formData.prerequisites || [],
             };
@@ -257,32 +261,19 @@ export const SkillManagement = () => {
           }
           return skill;
         });
-        
-        setNotification({
-          open: true,
-          message: 'Skill updated successfully',
-          severity: 'success',
-        });
       } else {
-        // Add new skill
+        // Create new skill
         updatedSkill = {
-          id: `skill_${Date.now()}`,
-          title: formData.title,
-          category: formData.category,
-          level: Number(formData.level),
-          status: formData.status,
-          requirements: formData.requirements,
+          id: `skill-${Date.now()}`,
+          title: formData.title || '',
+          category: formData.category || 'Push',
+          level: Number(formData.level || 1),
+          status: formData.status || 'active',
+          requirements: formData.requirements || '',
           description: formData.description,
           prerequisites: formData.prerequisites || [],
         };
-        
         currentSkills.push(updatedSkill);
-        
-        setNotification({
-          open: true,
-          message: 'Skill added successfully',
-          severity: 'success',
-        });
       }
       
       // Save updated skills to localStorage
@@ -500,7 +491,7 @@ export const SkillManagement = () => {
                       color="error"
                       onClick={() => handleDeleteClick(skill)}
                     >
-                      <Delete fontSize="small" />
+                      <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>

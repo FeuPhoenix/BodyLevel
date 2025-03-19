@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Box } from '@mui/material';
-import { Header } from './Header';
+import Header from './Header';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,7 +9,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <Header />
+      <Header toggleTheme={() => {}} mode="light" />
       <Container maxWidth="xl" sx={{ flex: 1, py: 3 }}>
         {children}
       </Container>
