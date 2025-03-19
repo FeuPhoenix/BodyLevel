@@ -3,6 +3,7 @@ import {
   Box,
   Typography,
   Paper,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -10,35 +11,31 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Chip,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   TextField,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
-  useTheme,
-  Snackbar,
+  Chip,
   Alert,
-  AlertProps,
-  DialogContentText,
-  SelectChangeEvent,
+  Snackbar,
+  useTheme,
 } from '@mui/material';
 import {
-  Edit,
-  Delete,
-  Add,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
   Person,
   AdminPanelSettings,
 } from '@mui/icons-material';
-import { User } from '../../types';
-import { useAppDispatch, useAppSelector } from '../../hooks';
-import { setAuthenticated } from '../../features/auth/authSlice';
+import type { SelectChangeEvent } from '@mui/material';
 
+// Define the AdminUser interface with specific types
 interface AdminUser {
   id: string;
   username: string;
@@ -46,270 +43,207 @@ interface AdminUser {
   role: 'user' | 'admin';
   status: 'active' | 'inactive' | 'suspended';
   lastLogin?: string;
-}
-
-interface FormErrors {
-  username?: string;
-  email?: string;
   password?: string;
 }
 
 export const UserManagement = () => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
+  
+  // State for users with strict typing
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<AdminUser> & { password?: string }>({
+  const [formData, setFormData] = useState<Partial<AdminUser>>({
     username: '',
     email: '',
     role: 'user',
     status: 'active',
-    password: '',
   });
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [notification, setNotification] = useState<{
-    open: boolean;
-    message: string;
-    severity: AlertProps['severity'];
-  }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Load users from localStorage
+  // Load mock users from localStorage on component mount
   useEffect(() => {
     loadUsers();
   }, []);
 
   const loadUsers = () => {
     try {
-      // Try to load users from localStorage
-      const storedUsers = localStorage.getItem('mockUsers');
+      // Try to load from localStorage
+      const savedUsers = localStorage.getItem('mockUsers');
       
-      if (storedUsers) {
-        const parsedUsers = JSON.parse(storedUsers);
-        // Format users for admin display
-        const adminUsers: AdminUser[] = parsedUsers.map((user: any) => ({
+      if (savedUsers) {
+        const parsedUsers = JSON.parse(savedUsers);
+        
+        // Ensure the parsed data conforms to the AdminUser type
+        const typedUsers: AdminUser[] = parsedUsers.map((user: any) => ({
           id: user.id,
           username: user.username,
           email: user.email,
-          role: user.role,
-          status: user.status || 'active',
-          lastLogin: user.lastLogin || 'Never',
+          role: user.role as 'user' | 'admin',
+          status: user.status as 'active' | 'inactive' | 'suspended',
+          lastLogin: user.lastLogin,
+          // Don't include password in the loaded data for security
         }));
-        setUsers(adminUsers);
+        
+        setUsers(typedUsers);
       } else {
-        // Initialize with some default users if none exist
-        const defaultUsers = [
+        // Create mock data if none exists
+        const mockUsers: AdminUser[] = [
           {
-            id: 'user_1',
-            username: 'admin',
+            id: 'user1',
+            username: 'john_doe',
+            email: 'john@example.com',
+            role: 'user',
+            status: 'active',
+            lastLogin: '2023-04-15T10:30:00',
+          },
+          {
+            id: 'user2',
+            username: 'jane_smith',
+            email: 'jane@example.com',
+            role: 'user',
+            status: 'inactive',
+            lastLogin: '2023-04-10T15:45:00',
+          },
+          {
+            id: 'admin1',
+            username: 'admin_user',
             email: 'admin@example.com',
             role: 'admin',
             status: 'active',
-            lastLogin: new Date().toISOString().split('T')[0],
-            password: 'admin123',
-          },
-          {
-            id: 'user_2',
-            username: 'user',
-            email: 'user@example.com',
-            role: 'user',
-            status: 'active',
-            lastLogin: new Date().toISOString().split('T')[0],
-            password: 'user123',
+            lastLogin: '2023-04-16T08:15:00',
           },
         ];
         
-        // Save to localStorage (with passwords for login)
-        localStorage.setItem('mockUsers', JSON.stringify(defaultUsers));
-        
-        // Display without passwords
-        setUsers(defaultUsers.map(user => ({
-          ...user,
-          password: undefined,
-        })));
+        setUsers(mockUsers);
+        localStorage.setItem('mockUsers', JSON.stringify(mockUsers));
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      setUsers([]);
+      setErrorMessage('Failed to load users');
     }
   };
 
-  const validateForm = (): boolean => {
-    const errors: FormErrors = {};
-    let isValid = true;
-
-    if (!formData.username || formData.username.trim() === '') {
-      errors.username = 'Username is required';
-      isValid = false;
-    }
-
-    if (!formData.email || formData.email.trim() === '') {
-      errors.email = 'Email is required';
-      isValid = false;
+  const handleOpenDialog = (user?: AdminUser) => {
+    if (user) {
+      // Edit mode - don't include password for security
+      setSelectedUser(user);
+      setFormData({
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      });
     } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        errors.email = 'Please enter a valid email address';
-        isValid = false;
-      }
+      // Create mode
+      setSelectedUser(null);
+      setFormData({
+        username: '',
+        email: '',
+        role: 'user',
+        status: 'active',
+      });
     }
-
-    // Password is required for new users
-    if (!selectedUser?.id && (!formData.password || formData.password.trim() === '')) {
-      errors.password = 'Password is required for new users';
-      isValid = false;
-    }
-
-    setFormErrors(errors);
-    return isValid;
-  };
-
-  const handleEditUser = (user: AdminUser) => {
-    setSelectedUser(user);
-    setFormData({...user});
-    setFormErrors({});
-    setDialogOpen(true);
-  };
-
-  const handleAddUser = () => {
-    setSelectedUser(null);
-    setFormData({
-      username: '',
-      email: '',
-      role: 'user',
-      status: 'active',
-      password: '',
-    });
     setFormErrors({});
     setDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setSelectedUser(null);
-    setFormData({});
+    setDeleteDialogOpen(false);
     setFormErrors({});
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field if it exists
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleRoleChange = (e: SelectChangeEvent<'user' | 'admin'>) => {
-    setFormData(prev => ({
-      ...prev,
-      role: e.target.value as 'user' | 'admin'
-    }));
+    setFormData((prev) => ({ ...prev, role: e.target.value as 'user' | 'admin' }));
   };
 
   const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive' | 'suspended'>) => {
-    setFormData(prev => ({
-      ...prev,
-      status: e.target.value as 'active' | 'inactive' | 'suspended'
-    }));
+    setFormData((prev) => ({ ...prev, status: e.target.value as 'active' | 'inactive' | 'suspended' }));
   };
 
-  const handleSaveUser = () => {
-    if (!validateForm()) {
-      return;
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.username) {
+      errors.username = 'Username is required';
     }
+    
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Invalid email format';
+    }
+    
+    // When creating a new user, password is required
+    if (!selectedUser && !formData.password) {
+      errors.password = 'Password is required for new users';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
+  const handleSubmit = () => {
+    if (!validateForm()) return;
+    
     try {
-      // Get current users
-      let currentUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-      
-      if (selectedUser?.id) {
-        // Edit existing user
-        currentUsers = currentUsers.map((user: AdminUser) => {
-          if (user.id === selectedUser.id) {
-            const updatedUser = {
-              ...user,
-              username: formData.username,
-              email: formData.email,
-              role: formData.role,
-              status: formData.status,
-            };
-            
-            // Only update password if provided
-            if (formData.password) {
-              updatedUser.password = formData.password;
-            }
-            
-            return updatedUser;
-          }
-          return user;
-        });
+      if (selectedUser) {
+        // Update existing user
+        const updatedUsers = users.map((user) =>
+          user.id === selectedUser.id
+            ? {
+                ...user,
+                username: formData.username || user.username,
+                email: formData.email || user.email,
+                role: formData.role || user.role,
+                status: formData.status || user.status,
+                ...(formData.password ? { password: formData.password } : {}),
+              }
+            : user
+        );
         
-        setNotification({
-          open: true,
-          message: 'User updated successfully',
-          severity: 'success',
-        });
+        setUsers(updatedUsers);
+        localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+        setSuccessMessage('User updated successfully');
       } else {
-        // Add new user
-        const newUser = {
-          id: `user_${Date.now()}`,
-          username: formData.username,
-          email: formData.email,
-          role: formData.role,
-          status: formData.status,
-          lastLogin: 'Never',
+        // Create new user
+        const newUser: AdminUser = {
+          id: `user${Date.now()}`,
+          username: formData.username!,
+          email: formData.email!,
+          role: formData.role!,
+          status: formData.status!,
+          lastLogin: new Date().toISOString(),
           password: formData.password,
         };
         
-        currentUsers.push(newUser);
-        
-        setNotification({
-          open: true,
-          message: 'User added successfully',
-          severity: 'success',
-        });
+        const updatedUsers = [...users, newUser];
+        setUsers(updatedUsers);
+        localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+        setSuccessMessage('User created successfully');
       }
       
-      // Save updated users to localStorage
-      localStorage.setItem('mockUsers', JSON.stringify(currentUsers));
-      
-      // Update current user if they were modified
-      const authState = JSON.parse(localStorage.getItem('authState') || '{}');
-      if (authState.user && selectedUser?.id === authState.user.id) {
-        // Find the updated user
-        const updatedUser = currentUsers.find((user: AdminUser) => user.id === selectedUser.id);
-        
-        if (updatedUser) {
-          // Update the auth state with the new user info
-          const { password, ...userData } = updatedUser;
-          authState.user = userData;
-          
-          // Save updated auth state
-          localStorage.setItem('authState', JSON.stringify(authState));
-          
-          // Update Redux state
-          dispatch(setAuthenticated({
-            user: userData, 
-            profile: authState.profile
-          }));
-        }
-      }
-      
-      // Reload users and close dialog
-      loadUsers();
       handleCloseDialog();
     } catch (error) {
       console.error('Error saving user:', error);
-      setNotification({
-        open: true,
-        message: 'Error saving user',
-        severity: 'error',
-      });
+      setErrorMessage('Failed to save user');
     }
   };
 
@@ -318,56 +252,19 @@ export const UserManagement = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteConfirm = () => {
+    if (!selectedUser) return;
+    
     try {
-      if (selectedUser?.id) {
-        // Get current users
-        const currentUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-        
-        // Filter out the deleted user
-        const updatedUsers = currentUsers.filter((user: AdminUser) => user.id !== selectedUser.id);
-        
-        // Save updated users to localStorage
-        localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
-        
-        // Check if deleted user is the current user
-        const authState = JSON.parse(localStorage.getItem('authState') || '{}');
-        if (authState.user && selectedUser.id === authState.user.id) {
-          // If current user was deleted, we should log them out
-          localStorage.removeItem('authState');
-          // We'd normally navigate to login here
-        }
-        
-        setNotification({
-          open: true,
-          message: 'User deleted successfully',
-          severity: 'success',
-        });
-        
-        // Update state
-        setUsers(updatedUsers.map(user => ({
-          ...user,
-          password: undefined,
-        })));
-      }
-      
-      setDeleteDialogOpen(false);
-      setSelectedUser(null);
+      const updatedUsers = users.filter((user) => user.id !== selectedUser.id);
+      setUsers(updatedUsers);
+      localStorage.setItem('mockUsers', JSON.stringify(updatedUsers));
+      setSuccessMessage('User deleted successfully');
+      handleCloseDialog();
     } catch (error) {
       console.error('Error deleting user:', error);
-      setNotification({
-        open: true,
-        message: 'Error deleting user',
-        severity: 'error',
-      });
+      setErrorMessage('Failed to delete user');
     }
-  };
-
-  const handleCloseNotification = () => {
-    setNotification({
-      ...notification,
-      open: false,
-    });
   };
 
   return (
@@ -385,8 +282,8 @@ export const UserManagement = () => {
         <Button
           variant="contained"
           color="primary"
-          startIcon={<Add />}
-          onClick={handleAddUser}
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenDialog()}
         >
           Add User
         </Button>
@@ -443,17 +340,17 @@ export const UserManagement = () => {
                   <TableCell align="right">
                     <IconButton
                       size="small"
-                      onClick={() => handleEditUser(user)}
+                      onClick={() => handleOpenDialog(user)}
                       sx={{ mr: 1 }}
                     >
-                      <Edit fontSize="small" />
+                      <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton 
                       size="small" 
                       color="error"
                       onClick={() => handleDeleteClick(user)}
                     >
-                      <Delete fontSize="small" />
+                      <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -531,7 +428,7 @@ export const UserManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button variant="contained" color="primary" onClick={handleSaveUser}>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
             {selectedUser?.id ? 'Save Changes' : 'Add User'}
           </Button>
         </DialogActions>
@@ -553,7 +450,7 @@ export const UserManagement = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" color="error" onClick={handleDeleteUser}>
+          <Button variant="contained" color="error" onClick={handleDeleteConfirm}>
             Delete
           </Button>
         </DialogActions>
@@ -561,17 +458,23 @@ export const UserManagement = () => {
 
       {/* Notification Snackbar */}
       <Snackbar 
-        open={notification.open} 
+        open={!!successMessage || !!errorMessage} 
         autoHideDuration={6000} 
-        onClose={handleCloseNotification}
+        onClose={() => {
+          setSuccessMessage('');
+          setErrorMessage('');
+        }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert 
-          onClose={handleCloseNotification} 
-          severity={notification.severity}
+          onClose={() => {
+            setSuccessMessage('');
+            setErrorMessage('');
+          }} 
+          severity={!!errorMessage ? 'error' : 'success'}
           sx={{ width: '100%' }}
         >
-          {notification.message}
+          {successMessage || errorMessage}
         </Alert>
       </Snackbar>
     </Box>

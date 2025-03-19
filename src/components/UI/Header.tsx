@@ -35,7 +35,12 @@ import { useAppSelector, useAppDispatch } from '../../hooks';
 import { logout } from '../../features/auth/authSlice';
 import { ThemeToggle } from './ThemeToggle';
 
-export const Header = () => {
+interface HeaderProps {
+  toggleTheme: () => void;
+  mode: 'light' | 'dark';
+}
+
+export default function Header({ toggleTheme, mode }: HeaderProps) {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
@@ -224,7 +229,7 @@ export const Header = () => {
           }}>
             {/* Theme Toggle Button */}
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ThemeToggle />
+              <ThemeToggle toggleTheme={toggleTheme} mode={mode} />
             </Box>
 
             {isAuthenticated ? (
@@ -576,9 +581,9 @@ export const Header = () => {
               border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
             }}>
               <Typography variant="body2" sx={{ mr: 1 }}>
-                {theme.palette.mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
               </Typography>
-              <ThemeToggle />
+              <ThemeToggle toggleTheme={toggleTheme} mode={mode} />
             </Box>
 
             {isAuthenticated && (
@@ -601,4 +606,4 @@ export const Header = () => {
       </SwipeableDrawer>
     </AppBar>
   );
-}; 
+} 

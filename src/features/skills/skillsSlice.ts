@@ -126,6 +126,18 @@ const skillsSlice = createSlice({
   name: 'skills',
   initialState,
   reducers: {
+    // Add the missing fetchSkills action
+    fetchSkillsStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    fetchSkillsSuccess: (state) => {
+      state.loading = false;
+    },
+    fetchSkillsFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+    },
     updateSkillProgress: (state, action: PayloadAction<{ skillId: string, sets: number, reps: number }>) => {
       const { skillId, sets, reps } = action.payload;
       const skill = state.skills.find(s => s.id === skillId);
@@ -224,6 +236,9 @@ const skillsSlice = createSlice({
 });
 
 export const { 
+  fetchSkillsStart,
+  fetchSkillsSuccess,
+  fetchSkillsFailure,
   updateSkillProgress, 
   resetProgress, 
   importProgress, 
@@ -231,5 +246,17 @@ export const {
   updateSkill,
   deleteSkill
 } = skillsSlice.actions;
+
+// Create a thunk function for fetchSkills
+export const fetchSkills = () => async (dispatch: any) => {
+  try {
+    dispatch(fetchSkillsStart());
+    // In a real app, you would fetch skills from an API here
+    // For now, we'll just mark it as successful since skills are loaded from local storage
+    dispatch(fetchSkillsSuccess());
+  } catch (error) {
+    dispatch(fetchSkillsFailure(error instanceof Error ? error.message : 'An unknown error occurred'));
+  }
+};
 
 export default skillsSlice.reducer; 

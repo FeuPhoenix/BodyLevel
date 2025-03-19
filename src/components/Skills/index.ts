@@ -1,1 +1,1 @@
-export * from './SkillTreeVisualization'; 
+export * from './Skills'; 

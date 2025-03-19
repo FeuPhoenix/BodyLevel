@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
   Paper,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -10,43 +11,40 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Chip,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  MenuItem,
+  Select,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem,
-  useTheme,
-  Snackbar,
+  Chip,
   Alert,
-  AlertProps,
-  DialogContentText,
-  SelectChangeEvent,
+  Snackbar,
+  Grid,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material';
 import {
-  Edit,
-  Delete,
-  Add,
-  FitnessCenterRounded,
-  Sync,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useAppSelector, useAppDispatch } from '../../hooks';
 import { Skill, SkillCategory } from '../../types';
 import { initialSkills } from '../../features/skills/initialSkills';
 import { syncAdminSkills, updateSkill, deleteSkill } from '../../features/skills/skillsSlice';
 
-// Modified Skill interface for admin management
+// Define skill types
+type SkillStatus = 'active' | 'archived' | 'draft';
+
 interface AdminSkill {
   id: string;
   title: string;
   category: SkillCategory;
   level: number;
-  status: 'active' | 'inactive';
+  status: SkillStatus;
   requirements: string;
   description?: string;
   prerequisites?: string[];
@@ -60,7 +58,6 @@ interface FormErrors {
 }
 
 export const SkillManagement = () => {
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const reduxSkills = useAppSelector(state => state.skills.skills);
   const [skills, setSkills] = useState<AdminSkill[]>([]);
@@ -72,7 +69,7 @@ export const SkillManagement = () => {
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
-    severity: AlertProps['severity'];
+    severity: 'success' | 'error' | 'info' | 'warning';
   }>({
     open: false,
     message: '',
@@ -395,10 +392,10 @@ export const SkillManagement = () => {
     }));
   };
 
-  const handleStatusChange = (e: SelectChangeEvent<'active' | 'inactive'>) => {
+  const handleStatusChange = (e: SelectChangeEvent<SkillStatus>) => {
     setFormData(prev => ({
       ...prev,
-      status: e.target.value as 'active' | 'inactive'
+      status: e.target.value as SkillStatus
     }));
   };
 
